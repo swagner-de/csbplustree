@@ -79,11 +79,11 @@ public:
         unsigned int i = 0;
         while (i < this->no_keys){
             if (k <= this->keys[i]){
-                return this->first_leaf_child + i-1;;
+                return this->first_child + i-1;;
             }
             else i++;
         }
-        return this->first_leaf_child + k-1;
+        return this->first_child + k-1;
     }
 };
 

@@ -21,3 +21,7 @@ int main() {
     }
     tree.bulk_insert(&key_map);
 }
+
+template class TreeNode<int>;
+template class TreeLeafNode<int>;
+template class TreeInnerNode<int>;

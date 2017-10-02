@@ -25,3 +25,4 @@ int main() {
 template class TreeNode<int>;
 template class TreeLeafNode<int>;
 template class TreeInnerNode<int>;
+template class Tree<int>;

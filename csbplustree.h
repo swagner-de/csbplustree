@@ -117,16 +117,17 @@ public:
 
     };
     
-    TidList::iterator find(T key){
+    TidList::iterator* find(T key){
         TreeNode<T>* current_node;
         current_node = this->root;
         do{
             // need to cast here to run the .find member?
             current_node = (dynamic_cast<TreeInnerNode<T>*>(current_node))->find(key);
-        }while(!current_node->isLeaf());
+        }while(!current_node->isLeaf);
 
         // is this the way to do it?
-        return (dynamic_cast<TreeLeafNode<T>*>(current_node))->getTidsByKey(key);
+        TreeLeafNode<T>* leafNode = dynamic_cast<TreeLeafNode<T>*>(current_node);
+        return leafNode->getTidsByKey(key);
 
 
     }

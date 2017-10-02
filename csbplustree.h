@@ -6,35 +6,35 @@
 #include <list>
 
 
-typedef typename std::list<unsigned int> TidList;
+using TidList = typename std::list<unsigned int>;
 
 // superclass for inner and leaf nodes
 template <class T>
-struct CsbPlusTreeNode{
+struct TreeNode{
 public:
     bool isLeaf;
 protected:
-    CsbPlusTreeNode<T>* first_child;
+    TreeNode<T>* first_child;
     unsigned int no_keys;
     
     
 public:
-    virtual ~CsbPlusTreeNode() = 0;
     virtual T getRightMostKey() = 0;
 };
 
 
 template <class T>
-struct CsbPlusTreeLeafNode: public CsbPlusTreeNode<T>{
+struct TreeLeafNode: public TreeNode<T>{
 public:
-    CsbPlusTreeLeafNode* preceding_sibling;
-    CsbPlusTreeLeafNode* following_sibling;
+    TreeLeafNode* preceding_sibling;
+    TreeLeafNode* following_sibling;
 private:
-    std::map<T ,TidList >* values;
+    std::map<T ,TidList*>* values;
     
     
 public:
-    CsbPlusTreeLeafNode(std::map<T ,TidList >* values, CsbPlusTreeLeafNode* preceding_sibling, CsbPlusTreeLeafNode* following_sibling){
+    TreeLeafNode();
+    TreeLeafNode(std::map<T ,TidList* >* values, TreeLeafNode* preceding_sibling, TreeLeafNode* following_sibling){
         this->following_sibling = following_sibling;
         this->preceding_sibling = preceding_sibling;
         this->no_keys = values->size();
@@ -53,33 +53,29 @@ public:
 
 
 template <class T>
-struct CsbPlusTreeInnerNode: public CsbPlusTreeNode<T>{
+struct TreeInnerNode: public TreeNode<T>{
 private:
-    T keys =  new T[this->no_keys];
-    CsbPlusTreeNode<T>* first_child;
+    // does this make sense or is the keys array in a different memory area?
+    T* keys =  new T[this->no_keys];
+    TreeNode<T>* first_child;
 
 public:
     T getRightMostKey(){
         return this->keys[this->no_keys - 1]; // obtain the right-most key
     }
-
-    CsbPlusTreeInnerNode(CsbPlusTreeNode<T>* first_child, unsigned int no_keys){
+    TreeInnerNode();
+    TreeInnerNode(TreeNode<T>* first_child, unsigned int no_keys){
         this->first_child = first_child;
         this->isLeaf=false;
         this->no_keys = no_keys;
         // iterate over all children and get their highest keys
         for (unsigned int i = 0; i<no_keys; ++i) {
-            CsbPlusTreeNode<T> *child = first_child + i; // obtain the i-th child
+            TreeNode<T> *child = first_child + i; // obtain the i-th child
             this->keys[i] = child->getRightMostKey();
         }
     };
 
-    ~CsbPlusTreeInnerNode(){
-        delete[] keys;
-    }
-
-
-    CsbPlusTreeNode<T>* find(T k){
+    TreeNode<T>* find(T k){
         unsigned int i = 0;
         while (i < this->no_keys){
             if (k <= this->keys[i]){
@@ -93,23 +89,23 @@ public:
 
 
 template <class T>
-struct CsbPlusTree{
+struct Tree{
 private:
     unsigned int leaf_key_size;
     unsigned int node_split_size;
-    CsbPlusTreeInnerNode<T>* root;
+    TreeInnerNode<T>* root;
     unsigned int no_leaf_nodes;
 
 public:
-    CsbPlusTree(unsigned int leaf_key_size, unsigned int node_split_size){
+    Tree(unsigned int leaf_key_size, unsigned int node_split_size){
         this->node_split_size = node_split_size;
         this->leaf_key_size = leaf_key_size;
     }
-    ~CsbPlusTree(){}
+    ~Tree(){}
 
     void bulk_insert(std::map< T, TidList* >* values){
         
-        CsbPlusTreeNode<T> nodes = this->createLeafNodes(values);
+        TreeNode<T>* nodes = this->createLeafNodes(values);
         unsigned int no_lower_level_nodes = this->no_leaf_nodes;
         unsigned int no_new_nodes = ceil(no_lower_level_nodes/this->node_split_size);
         do{
@@ -117,20 +113,20 @@ public:
             no_lower_level_nodes = no_new_nodes;
             no_new_nodes = ceil(no_lower_level_nodes/this->node_split_size);
         }while(no_new_nodes>0);
-        this->root = nodes;
+        this->root = dynamic_cast<TreeInnerNode <T>*>(nodes);
 
     };
     
     TidList::iterator find(T key){
-        CsbPlusTreeNode<T>* current_node;
+        TreeNode<T>* current_node;
         current_node = this->root;
         do{
             // need to cast here to run the .find member?
-            current_node = (dynamic_cast<CsbPlusTreeInnerNode<T>*>(current_node))->find(key);
+            current_node = (dynamic_cast<TreeInnerNode<T>*>(current_node))->find(key);
         }while(!current_node->isLeaf());
 
         // is this the way to do it?
-        return (dynamic_cast<CsbPlusTreeLeafNode<T>*>(current_node))->getTidsByKey(key);
+        return (dynamic_cast<TreeLeafNode<T>*>(current_node))->getTidsByKey(key);
 
 
     }
@@ -139,47 +135,47 @@ public:
 private:
 
 
-    CsbPlusTreeLeafNode<T>* createLeafNodes(std::map< T, TidList* >* values) {
+    TreeLeafNode<T>* createLeafNodes(std::map< T, TidList* >* values) {
 
         this->no_leaf_nodes = ceil(values->size() / leaf_key_size);
 
         // allocate consecutive space for leaf nodes
-        CsbPlusTreeLeafNode<T>* leaf_nodes = new CsbPlusTreeLeafNode<T>[this->no_leaf_nodes];
+        TreeLeafNode<T>* leaf_nodes = new TreeLeafNode<T>[this->no_leaf_nodes];
 
 
-        // why do i need typename here?
-        typename std::map<T, TidList>::iterator iter = values->begin();
+        // why does map<T, TidList>::iterator iter=... not work?
+        auto iter = values->begin();
         unsigned int i = 0;
 
         // create leaf nodes here
         while (iter != values->end()) {
 
             // determine forward and backward pointers of leaf node
-            CsbPlusTreeLeafNode<T>* preceding;
-            CsbPlusTreeLeafNode<T>* following;
+            TreeLeafNode<T>* preceding;
+            TreeLeafNode<T>* following;
 
             if (i == 0) preceding = nullptr;
-            else preceding = leaf_nodes[i - 1];
+            else preceding = leaf_nodes + i - 1;
             if (i == values->size() - 1) following = nullptr;
-            else following = leaf_nodes[i + 1];
+            else following = leaf_nodes + i + 1;
 
 
             // create the map of the leaf node with multiple keys
             std::map<T, TidList>* node_values;
-            for (unsigned int j = 0; j < this->leaf_key_size && iter != values.end; ++j) {
-                node_values = std::map<T, TidList*>();
+            for (unsigned int j = 0; j < this->leaf_key_size && iter != values->end(); ++j) {
+                std::map<T, TidList*> node_values;
                 node_values[iter->first] = iter->second;
                 iter++;
-                leaf_nodes[i] = CsbPlusTreeLeafNode<T>(node_values, preceding, following);
+                leaf_nodes[i] = TreeLeafNode<T>(&node_values, preceding, following);
             }
             i++;
         }
         return leaf_nodes;
     }
 
-    CsbPlusTreeInnerNode<T>* createInnerNodes(CsbPlusTreeNode<T>* lower_level_nodes, unsigned int no_lower_level_nodes, unsigned int no_nodes){
+    TreeInnerNode<T>* createInnerNodes(TreeNode<T>* lower_level_nodes, unsigned int no_lower_level_nodes, unsigned int no_nodes){
         // allocate consecutive memory for the new higher level of nodes
-        CsbPlusTreeInnerNode<T>* nodes = new CsbPlusTreeInnerNode<T>[no_nodes];
+        TreeInnerNode<T>* nodes = new TreeInnerNode<T>[no_nodes];
 
 
         // fill the created array
@@ -191,9 +187,9 @@ private:
             if (remaining_keys < this->node_split_size) no_keys = remaining_keys;
             else no_keys = this->node_split_size;
 
-            CsbPlusTreeInnerNode<T>* node = CsbPlusTreeInnerNode<T>(lower_level_nodes[i*this->node_split_size], no_keys);
 
-            nodes[i]=node;
+
+            nodes[i] = TreeInnerNode<T>(lower_level_nodes + i*this->node_split_size, no_keys);;
         }
         return nodes;
     }

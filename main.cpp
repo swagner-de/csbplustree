@@ -1,28 +1,19 @@
 #include <iostream>
 #include "csbplustree.h"
-#include <list>
-#include <map>
 
 
 
 int main() {
 
+    CsbTree<uint32_t , uint32_t, 5>* tree = new CsbTree<uint32_t , uint32_t, 5>();
 
+    tree->insert(1, 3622);
+    tree->insert(2, 44654564);
 
-    Tree<int> tree = Tree<int>(5, 5);
-    std::map<int, TidList*> key_map;
+    std::cout
+            << tree->find(2) << std::endl
+            << tree->find(1);
 
-    for (unsigned int i; i<INT32_MAX/4; i++){
-        if(rand() & 1){
-            TidList* tids;
-            tids->push_back(i*10);
-            key_map.insert(std::make_pair(i, tids));
-        }
-    }
-    tree.bulk_insert(&key_map);
+    return 0;
+
 }
-
-template class TreeNode<int>;
-template class TreeLeafNode<int>;
-template class TreeInnerNode<int>;
-template class Tree<int>;

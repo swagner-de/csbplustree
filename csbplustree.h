@@ -179,38 +179,44 @@ private:
     }
 
     void split(CsbInnerNode* parent_node, uint16_t child_idx){
+        uint16_t children_leaf = ((CsbInnerNode*) parent_node->children)->leaf;
 
-        // TODO make function generic for leaf and inner nodes
+        uint32_t child_node_size;
+        if (children_leaf){
+            child_node_size = total_leaf_node_size;
+        } else{
+            child_node_size = total_inner_node_size;
+        }
 
-        char* memptr = mm->getMem(total_leaf_node_size * (parent_node->num_keys+1));
+        char* memptr = mm->getMem(child_node_size * (parent_node->num_keys+1));
         memcpy(memptr,
                parent_node->children,
-               total_leaf_node_size*(child_idx)
+               child_node_size*(child_idx)
         );
-        memcpy(memptr + total_leaf_node_size*(child_idx+2), // leave space for the 2 new nodes
-               parent_node->children + total_leaf_node_size*(child_idx+1),
-               total_leaf_node_size * (parent_node->num_keys-child_idx-1) // all the trailing nodes
+        memcpy(memptr + child_node_size*(child_idx+2), // leave space for the 2 new nodes
+               parent_node->children + child_node_size*(child_idx+1),
+               child_node_size * (parent_node->num_keys-child_idx-1) // all the trailing nodes
         );
 
-        CsbLeafNode* leaf_to_split = parent_node->children + child_idx * total_leaf_node_size;
-        CsbLeafNode* right_leaf = new (memptr + child_idx*total_leaf_node_size) CsbLeafNode();
-        CsbLeafNode* left_leaf = new (memptr + (child_idx+1)*total_leaf_node_size) CsbLeafNode();
+        CsbLeafNode* leaf_to_split = parent_node->children + child_idx * child_node_size;
+        CsbLeafNode* right_leaf = new (memptr + child_idx*child_node_size) CsbLeafNode();
+        CsbLeafNode* left_leaf = new (memptr + (child_idx+1)*child_node_size) CsbLeafNode();
         left_leaf->num_keys = ceil(2/leaf_to_split->num_keys);
         right_leaf->num_keys = leaf_to_split->num_keys - left_leaf->num_keys;
 
         memcpy(&left_leaf->keys, leaf_to_split->keys, sizeof(tKey)*left_leaf->num_keys);
         memcpy(&right_leaf->keys, leaf_to_split->keys[left_leaf->num_keys], sizeof(tKey)*right_leaf->num_keys);
 
-        memcpy(&left_leaf->tids, leaf_to_split->tids, sizeof(tTid)*left_leaf->num_keys);
-        memcpy(&right_leaf->tids, leaf_to_split->tids[left_leaf->num_keys], sizeof(tTid)*right_leaf->num_keys);
+        if (children_leaf){
+            memcpy(&left_leaf->tids, leaf_to_split->tids, sizeof(tTid)*left_leaf->num_keys);
+            memcpy(&right_leaf->tids, leaf_to_split->tids[left_leaf->num_keys], sizeof(tTid)*right_leaf->num_keys);
+            updateLeafNodesPointers((CsbLeafNode*)(memptr), parent_node->num_keys+1);
+        }
 
 
         // TODO how do I free the memory I allocated with posix_sysalign?
-
         parent_node->num_keys += 1;
         parent_node->children = memptr;
-
-        updateLeafNodesPointers((CsbLeafNode*)(memptr), parent_node->num_keys);
 
     }
 

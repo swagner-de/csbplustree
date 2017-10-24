@@ -134,7 +134,7 @@ struct CsbTree{
         // cover case if tree is basically empty
         if (root->num_keys == 0) {
             root->children = mm->getMem(total_leaf_node_size);
-            CsbLeafNode *node = new(root->children + i * total_leaf_node_size) CsbLeafNode();
+            CsbLeafNode *node = new(root->children) CsbLeafNode();
             root->num_keys = 1;
             root->keys[0] = key;
             node->keys[0] = key;
@@ -152,11 +152,14 @@ struct CsbTree{
             return;
         }
 
+        // TODO else case if leaf node is full and splits have to occur
+        // TODO recursive splits up the tree
+
 
     }
 
     void remove(tKey key, tTid tid){
-
+        // TODO remove node
     }
 
 
@@ -164,7 +167,7 @@ private:
     MemoryManager* mm;
     CsbInnerNode* root;
 
-    void updateLeafNodesPointers(CsbLeafNode* first_leaf, uint16_t num_leaf_nodes){
+    static void updateLeafNodesPointers(CsbLeafNode* first_leaf, uint16_t num_leaf_nodes){
         for (uint16_t i=0; i<num_leaf_nodes; i++){
             if (i!=0){
                 (first_leaf + i)->preceding_node = first_leaf + i-1;
@@ -176,13 +179,18 @@ private:
     }
 
     void split(CsbInnerNode* parent_node, uint16_t child_idx){
+
+        // TODO make function generic for leaf and inner nodes
+
         char* memptr = mm->getMem(total_leaf_node_size * (parent_node->num_keys+1));
         memcpy(memptr,
                parent_node->children,
-               total_leaf_node_size*(child_idx));
+               total_leaf_node_size*(child_idx)
+        );
         memcpy(memptr + total_leaf_node_size*(child_idx+2), // leave space for the 2 new nodes
                parent_node->children + total_leaf_node_size*(child_idx+1),
-               total_leaf_node_size * (parent_node->num_keys-child_idx-1)); // all the trailing nodes
+               total_leaf_node_size * (parent_node->num_keys-child_idx-1) // all the trailing nodes
+        );
 
         CsbLeafNode* leaf_to_split = parent_node->children + child_idx * total_leaf_node_size;
         CsbLeafNode* right_leaf = new (memptr + child_idx*total_leaf_node_size) CsbLeafNode();

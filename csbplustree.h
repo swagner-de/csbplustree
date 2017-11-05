@@ -66,12 +66,32 @@ struct CsbTree{
             leaf = false;
         }
 
-        void splitKeys(CsbInnerNode* split_node){
-            uint16_t split_idx= ceil(this->num_keys/2.0);
-            memmove(&split_node->keys, &this->keys[split_idx], sizeof(tKey)*this->num_keys-split_idx); // keys
-            split_node->num_keys = this->num_keys-split_idx;
-            this->num_keys = split_idx;
-            split_node->children = getKthNode(split_idx, this->children);
+        CsbInnerNode* insert(char* childptr, uint16_t num_keys){
+
+            tKey largest_key_child = getLargestKey(childptr + total_inner_node_size * num_keys);
+            uint16_t idx_to_insert = idxToDescend(largest_key_child, this->keys, this->num_keys);
+
+
+            // allocate new node group
+            char*  memptr = mm->getMem((this->num_keys+1) * total_inner_node_size);
+            // copy values to new group
+            memcpy(memptr, this->children, this->idx_to_insert*total_inner_node_size); // leading nodes
+            memcpy(memptr + total_inner_node_size*(idx_to_insert+1), this->children + total_inner_node_size*(idx_to_insert), this->num_keys-idx_to_insert*total_inner_node_size); // trailing nodes
+            // shift keys
+            memmove(&this->keys[idx_to_insert+1], &this->keys[idx_to_insert], sizeof(tKey) * (this->num_keys-idx_to_insert));
+
+            // insert key and create node
+            this->children = memptr;
+            this->keys[idx_to_insert] = largest_key_child;
+            CsbInnerNode* node_to_insert =  new (memptr + total_inner_node_size*idx_to_insert) CsbInnerNode();
+            node_to_insert->children = childptr;
+            return node_to_insert;
+        }
+
+        void splitKeys(CsbInnerNode* split_node, uint16_t num_keys_remaining){
+            memmove(&split_node->keys, &this->keys[num_keys_remaining], sizeof(tKey)*this->num_keys-num_keys_remaining); // keys
+            split_node->num_keys = this->num_keys-num_keys_remaining;
+            this->num_keys = num_keys_remaining;
         }
     };
 
@@ -95,7 +115,7 @@ struct CsbTree{
          * to the location of the old node;
          * if the key is the largest of the node, this will just append it
          */
-        void insert(tKey key, tTid tid, CsbInnerNode* parent){
+        void insert(tKey key, tTid tid){
             // if key to insert is the largest key in the leaf node, append it
             if(this->keys[this->num_keys-1]<key || this->num_keys == 0){
                 this->keys[this->num_keys] = key;
@@ -239,61 +259,64 @@ private:
     }
 
 
-    void split(char* node_to_split, std::stack<std::pair<CsbInnerNode*, uint16_t>>* path){
-        std::pair<CsbInnerNode*, uint16_t> parent = path->top();
-        CsbInnerNode * parent_node = parent->first;
-        uint16_t node_to_split_idx = parent->second;
+    std::pair<CsbInnerNode*, CsbInnerNode*> split(char* node_to_split, std::stack<CsbInnerNode*>* path){
+
+        CsbInnerNode* parent_node;
+        uint16_t num_keys_left_split;
+        uint16_t num_keys_right_split;
         uint32_t node_size = total_inner_node_size;
         if (isLeaf(node_to_split)) node_size = total_leaf_node_size;
 
+        if (!path->empty()){
+            parent_node = path->top();
+            num_keys_left_split = ceil(parent_node->num_keys/2.0);
+            num_keys_right_split = parent_node->num_keys - num_keys_left_split;
+        }else{
+            // split is called on root
+            parent_node = (CsbInnerNode*) this->root;
+            num_keys_left_split = ceil(parent_node->num_keys/2.0);
+            num_keys_right_split = parent_node->num_keys - num_keys_left_split;
 
-        if (isFull((char*) parent_node)){
-            uint16_t split_idx = ceil(parent_node->num_keys/2.0);
-            // create a new node group g'
-            char* memptr = mm->getMem((parent_node->num_keys - split_idx) * node_size);
+            this->root = mm->getMem(total_inner_node_size);
+            new (this->root) CsbInnerNode();
+            parent_node = this->root;
+        }
+
+        if (isFull((char*) parent_node)) {
+            // create a new parent node group g'
+            char *parent_memptr = mm->getMem(num_keys_right_split * node_size);
             // distribute the nodes evenly
-            memcpy(memptr, &parent_node->children[split_idx+1], node_size * (parent_node->num_keys - split_idx));
-            parent_node->num_keys -= (split_idx-1);
+            memcpy(parent_memptr, &parent_node->children[num_keys_left_split], node_size * num_keys_right_split);
+            parent_node->num_keys = num_keys_left_split;
 
-            split(((char*) parent_node), path);
+            // recursively call split on parent
+            std::pair<CsbInnerNode *, CsbInnerNode *> splitted_nodes =
+                    (CsbInnerNode *) split((char *) parent, path);
 
+            CsbInnerNode *parent_left = splitted_nodes.first;
+            CsbInnerNode *parent_right = splitted_nodes.second;
 
-        }
+            delete (splitted_nodes);
 
-        if(!isFull((char*) parent_node)) {
-
-            char *memptr = mm->getMem((parent_node->num_keys + 1) * node_size); //create node group g'
-
-            // copy all nodes from old node group to g' leaving space for an additional node
-            memcpy(
-                    memptr,
-                   &parent_node->children,
-                   node_size * (node_to_split_idx + 1)
-            );
-            memcpy(
-                    memptr + node_size * (node_to_split_idx + 2), // leave space for one additional node
-                    &parent_node->children[node_to_split_idx + 1],
-                    node_size *
-                    (parent_node->keys - node_to_split_idx - 1)
-            ); // copy the node to the freshly allocated node group
-
-            parent_node->children = memptr; // update the child pointer f
-
-            //create the new node in the new node group
-            if (isLeaf(node_to_split)){
-                CsbLeafNode* split_node = new(memptr + node_size * (node_to_split_idx +1)) CsbLeafNode();
-                (CsbLeafNode*)node_to_split)->splitKeysAndTids(split_node); // evenly distribute the keys
+            // determine parent node to insert this splitted node
+            if (getLargestKey((char *) parent_left) < getLargestKey(node_to_split)) {
+                parent_node = parent_left;
             }else{
-                CsbInnerNode* split_node = new(memptr + node_size * (node_to_split_idx +1)) CsbInnerNode();
-                ((CsbInnerNode*)node_to_split)->splitKeys(split_node); // evenly distribute the keys
-
+                parent_node = parent_right;
             }
-
-            memmove(&parent_node->keys[node_to_split_idx+2], &parent_node->keys[node_to_split_idx+1], sizeof(tKey) * parent_node->num_keys-1); // shift the keys in the parent accordingly
-            // update the keys
-            parent_node->keys[node_to_split_idx] = getLargestKey(node_to_split);
-            parent_node->keys[node_to_split_idx+1] =  getLargestKey((char*) split_node);
         }
+        // split this node
+        CsbInnerNode* splitted_right, splitted_left;
+        splitted_left = (CsbInnerNode*) node_to_split;
+
+        splitted_right = parent_node->insert(
+                splitted_left->children + num_keys_left_split*node_size,
+                num_keys_right_split
+        );
+        splitted_left.splitKeys(splitted_right, num_keys_left_split);
+
+        return std::make_pair(splitted_left, splitted_right);
+
     }
 
     static char* getKthNode(uint16_t k, char* first_child){

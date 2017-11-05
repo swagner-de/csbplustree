@@ -180,18 +180,6 @@ struct CsbTree{
             node->insert(key, tid);
             return;
         }
-        // root is leaf but is full
-        if (isLeaf(root) && isFull(root)){
-            // create 2 new leaf nodes, one new root inner node with pointers to the leaf nodes
-            CsbLeafNode* to_split = (CsbLeafNode*) root;
-            CsbInnerNode* new_root = new (mm->getMem(total_inner_node_size)) CsbInnerNode();
-            new_root->num_keys = 1;
-            new_root->keys[0] = getLargestKey(root);
-            new_root->children = root;
-            root = (char*) new_root;
-            split(new_root, 0);
-            return;
-        }
 
         std::stack<std::pair<CsbLeafNode*, uint16_t >> path;
         CsbLeafNode* leaf_to_insert = findLeafNode(key, path);
@@ -269,16 +257,15 @@ private:
 
         if (!path->empty()){
             parent_node = path->top();
-            num_keys_left_split = ceil(parent_node->num_keys/2.0);
-            num_keys_right_split = parent_node->num_keys - num_keys_left_split;
+            num_keys_left_split = ceil(getNumKeys(node_to_split)/2.0);
+            num_keys_right_split = getNumKeys(node_to_split) - num_keys_left_split;
         }else{
             // split is called on root
             parent_node = (CsbInnerNode*) this->root;
             num_keys_left_split = ceil(parent_node->num_keys/2.0);
             num_keys_right_split = parent_node->num_keys - num_keys_left_split;
 
-            this->root = mm->getMem(total_inner_node_size);
-            new (this->root) CsbInnerNode();
+            parent_node = new (mm->getMem(total_inner_node_size)) CsbInnerNode();
             parent_node = this->root;
         }
 
@@ -298,6 +285,8 @@ private:
 
             delete (splitted_nodes);
 
+
+
             // determine parent node to insert this splitted node
             if (getLargestKey((char *) parent_left) < getLargestKey(node_to_split)) {
                 parent_node = parent_left;
@@ -305,6 +294,7 @@ private:
                 parent_node = parent_right;
             }
         }
+
         // split this node
         CsbInnerNode* splitted_right, splitted_left;
         splitted_left = (CsbInnerNode*) node_to_split;

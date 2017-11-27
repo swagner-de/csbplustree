@@ -79,7 +79,7 @@ struct CsbTree{
         CsbInnerNode(){
             num_keys = 0;
             leaf = false;
-        }
+        };
 
 
         /*
@@ -119,9 +119,10 @@ struct CsbTree{
         void splitKeys(CsbInnerNode* split_node, uint16_t num_keys_remaining){
             memmove(&split_node->keys, &this->keys[num_keys_remaining], sizeof(tKey)*(this->num_keys-num_keys_remaining)); // keys
             split_node->num_keys = this->num_keys-num_keys_remaining;
+            split_node->children = getKthNode(num_keys_remaining, this->children);
             this->num_keys = num_keys_remaining;
         }
-    };
+    } __attribute__((packed));
 
     struct CsbLeafNode {
         tKey keys[max_keys];
@@ -133,10 +134,11 @@ struct CsbTree{
         uint8_t free[num_free_bytes_leaf];   // padding
 
 
+
         CsbLeafNode() {
             leaf = true;
             num_keys = 0;
-        }
+        };
 
         void insert(tKey key, tTid tid){
 
@@ -161,7 +163,7 @@ struct CsbTree{
             this->num_keys = num_keys_remaining;
         }
 
-    };
+    } __attribute__((packed));
 
 
 
@@ -249,8 +251,9 @@ struct CsbTree{
         uint16_t num_keys_right_split;
         uint32_t node_size = (isLeaf(node_to_split)) ? total_leaf_node_size : total_inner_node_size;
 
-        if (!path->empty()){
+        if (this->root != node_to_split){
             parent_node = path->top();
+            path->pop();
             num_keys_left_split = ceil(getNumKeys(node_to_split)/2.0);
             num_keys_right_split = getNumKeys(node_to_split) - num_keys_left_split;
         }else{
@@ -262,12 +265,14 @@ struct CsbTree{
             parent_node = new (MemoryManager::getInstance().getMem(total_inner_node_size)) CsbInnerNode();
             MemoryManager::getInstance().release(this->root, (isLeaf(this->root)) ? total_leaf_node_size : total_inner_node_size);
             parent_node->children = this->root;
+            parent_node->num_keys = 1;
+            parent_node->keys[0] = getLargestKey(this->root);
             this->root = (char*) parent_node;
         }
 
         if (isFull((char*) parent_node)) {
             char* splitted_nodes = split((char *) parent_node, path);
-            if (getLargestKey(splitted_nodes) < getLargestKey(node_to_split) ){ // if the largest key of the left parent is smaller than the highest key of the nod to be splitted
+            if (getLargestKey(splitted_nodes) > getLargestKey(node_to_split) ){ // if the largest key of the left parent is smaller than the highest key of the nod to be splitted
                 parent_node = (CsbInnerNode*) splitted_nodes; // mark the left node as the parent for the 2 nodes that will be created by the split
             }else{
                 parent_node = ((CsbInnerNode*) splitted_nodes) + 1; // else mark the right node which is adjacent in memory as the parent
@@ -276,7 +281,7 @@ struct CsbTree{
         }
 
         // split this node
-        node_to_split_index = (node_to_split -  parent_node->children) / node_size;
+        node_to_split_index = (node_to_split - parent_node->children) / node_size;
         splitted_left = parent_node->insert(node_to_split_index + 1);
         splitted_right = splitted_left + node_size;
 
@@ -287,30 +292,18 @@ struct CsbTree{
             // move the keys from orig to new node
             ((CsbInnerNode*)splitted_left)->splitKeys(
                     (CsbInnerNode*) splitted_right, num_keys_left_split);
-            // set the child ptr of the left node
-            ((CsbInnerNode*) splitted_right)->children =
-                    ((CsbInnerNode*) node_to_split)->children + num_keys_left_split * node_size;
         }
 
-        // update the num keys of both nodes
-        ((CsbInnerNode*) splitted_right)->num_keys = num_keys_right_split;
-        ((CsbInnerNode*) splitted_left)->num_keys = num_keys_left_split;
         // update the keys in the parent
         parent_node->keys[node_to_split_index] = getLargestKey(splitted_left);
         parent_node->keys[node_to_split_index +1] = getLargestKey(splitted_right);
+        parent_node->num_keys +=1;
 
         return (char*) splitted_left;
     }
 
     static char* getKthNode(uint16_t k, char* first_child){
-        uint32_t child_node_size;
-        if (isLeaf(first_child)){
-            child_node_size = total_leaf_node_size;
-        }
-        else{
-            child_node_size = total_inner_node_size;
-        }
-        return first_child + k*child_node_size;
+        return first_child + k*(isLeaf(first_child) ? total_leaf_node_size : total_inner_node_size);
     }
 
     /*

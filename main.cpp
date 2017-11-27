@@ -7,16 +7,14 @@ int main() {
 
     CsbTree<uint32_t , uint32_t, 1>* tree = new CsbTree<uint32_t , uint32_t, 1>();
 
-    std::cout << tree->total_leaf_node_size << std::endl;
-    std::cout << tree->num_cachelines_leaf_node << std::endl;
-    std::cout << tree->total_inner_node_size<<std::endl;
-
-
     for (uint32_t i= 10000; i !=0; i--){
         tree->insert(i, i*10000);
     }
     for (uint32_t i= 0; i<= 10000; i++){
-        std::cout << tree->find(i) << std::endl;
+        uint32_t retrieved = tree->find(i);
+        if (retrieved != i*10000) {
+            std::cout << "Error retrieving value for key " + i << std::endl;
+        }
     }
 
     return 0;

@@ -122,6 +122,20 @@ struct CsbTree{
             split_node->children = getKthNode(num_keys_remaining, this->children);
             this->num_keys = num_keys_remaining;
         }
+
+        void remove(uint16_t remove_idx){
+            uint32_t child_node_size = (childrenIsLeaf(this)) ? total_leaf_node_size : total_inner_node_size;
+            char* memptr = mm->getInstance().getMem((this->num_keys-1) * child_node_size);
+
+            memcpy(memptr, this->children, remove_idx*child_node_size);
+            memcpy(memptr + (remove_idx*child_node_size), this->children + ((remove_idx+1) * child_node_size), (this->num_keys-1-remove_idx) * child_node_size);
+            mm->getInstance().release(this->children, child_node_size*this->num_keys);
+
+            this->children = memptr;
+            memmove(&this->keys[remove_idx], &this->keys[remove_idx+1], (this->num_keys-1-remove_idx)*sizeof(tKey));
+            this->num_keys -= 1;
+        }
+
     } __attribute__((packed));
 
     struct CsbLeafNode {
@@ -163,6 +177,17 @@ struct CsbTree{
             this->num_keys = num_keys_remaining;
         }
 
+        void remove(tKey key, tTid tid) {
+            uint16_t remove_idx = idxToDescend(key, this->keys, this->num_keys);
+            while (this->tids[remove_idx] != tid && remove_idx < this->num_keys && this->keys[remove_idx] == key)
+                remove_idx++;
+            if (this->tids[remove_idx] != tid){
+                return;
+            }
+            memmove(this->keys[remove_idx], this->keys[remove_idx+1], (this->num_keys-1-remove_idx)*sizeof(tKey));
+            memmove(this->tids[remove_idx], this->tids[remove_idx+1], (this->num_keys-1-remove_idx)*sizeof(tTid));
+            this->num_keys -=1;
+        }
     } __attribute__((packed));
 
 
@@ -206,7 +231,22 @@ struct CsbTree{
     }
 
     void remove(tKey key, tTid tid){
-        // TODO remove node
+        std::stack<CsbInnerNode*>* path;
+        CsbInnerNode* parent;
+        CsbLeafNode* leaf;
+        uint16_t parent_idx = (leaf-parent->children)/total_leaf_node_size;
+
+        parent = path->top();
+        path->pop();
+        leaf = findLeafNode(key, &path);
+
+        if (key != getLargestKey(leaf)) {
+            leaf->remove(key, tid);
+        }
+        else{
+            leaf->remove(key, tid);
+            parent->keys[parent_idx] = getLargestKey(leaf);
+        }
     }
 
     static uint16_t isLeaf(char* node){

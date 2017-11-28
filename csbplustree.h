@@ -7,6 +7,8 @@
 #define NUM_INNER_NODES_TO_ALLOC 1000
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include <stack>
 #include <memory.h>
@@ -46,7 +48,7 @@ private:
         bytes_free = chunk_size;
         bytes_allocated = 0;
         if (posix_memalign(&this->memptr, 64, chunk_size)) {
-            std::cout << "Error allocating memory";
+            printf("Error allocating memory\n");
         }
     }
 };
@@ -80,7 +82,6 @@ struct CsbTree{
             num_keys = 0;
             leaf = false;
         };
-
 
         /*
          * this function shifts all nodes past the insert index within the parents node group
@@ -153,6 +154,13 @@ struct CsbTree{
             leaf = true;
             num_keys = 0;
         };
+
+        void updatePointers(CsbLeafNode* preceding, CsbLeafNode* following){
+            this->preceding_node = preceding;
+            this->following_node = following;
+            preceding->following_node = &this;
+            following->preceding_node = &this;
+        }
 
         void insert(tKey key, tTid tid){
 
@@ -268,18 +276,6 @@ struct CsbTree{
     static tKey getLargestKey(char* node){
         return ((CsbInnerNode*) node)->keys[((CsbInnerNode*) node)->num_keys -1];
     }
-
-    static void updateLeafNodesPointers(CsbLeafNode* first_leaf, uint16_t num_leaf_nodes){
-        for (uint16_t i=0; i<num_leaf_nodes; i++){
-            if (i!=0){
-                (first_leaf + i)->preceding_node = first_leaf + i-1;
-            }
-            if (i!=num_leaf_nodes-1){
-                (first_leaf + i)->following_node = first_leaf + i +1;
-            }
-        }
-    }
-
 
     char* split(char* node_to_split, std::stack<CsbInnerNode*>* path){
 

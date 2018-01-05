@@ -5,6 +5,7 @@
 #define FIXED_SIZE 12
 #define LEAF_FIXED_SIZE 20
 #define NUM_INNER_NODES_TO_ALLOC 1000
+#define CHUNK_SIZE 100
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -12,48 +13,11 @@
 #include <math.h>
 #include <stack>
 #include <memory.h>
-
-struct MemoryManager{
-public:
-    static MemoryManager& getInstance(){
-        static MemoryManager instance;
-        return instance;
-    }
-
-    char* getMem(uint32_t size){
-        if (size > bytes_free){
-            allocate_new_chunk();
-        }
-        bytes_allocated += size;
-        bytes_free -= size;
-        return ((char*)memptr) + bytes_allocated - size;
-    }
-
-    void release(char* begin, uint32_t num_bytes){
-        // TODO
-    }
-
-private:
-    void* memptr;
-    uint32_t bytes_allocated;
-    uint32_t bytes_free;
-    const uint32_t chunk_size = 10000;
-
-    MemoryManager() {
-        bytes_allocated = 0;
-        bytes_free = 0;
-    }
-
-    void allocate_new_chunk(){
-        bytes_free = chunk_size;
-        bytes_allocated = 0;
-        if (posix_memalign(&this->memptr, 64, chunk_size)) {
-            printf("Error allocating memory\n");
-        }
-    }
-};
+#include "MemoryHandler.h"
+#include <cstddef>
 
 template <class tKey, class tTid, uint16_t num_cachelines>
+
 struct CsbTree{
     static const uint32_t total_inner_node_size = CACHE_LINE_SIZE * num_cachelines;
     static const uint16_t max_keys = (total_inner_node_size - FIXED_SIZE) / sizeof(tKey);
@@ -63,18 +27,21 @@ struct CsbTree{
     static const uint32_t total_leaf_node_size = num_cachelines_leaf_node * CACHE_LINE_SIZE;
     static const uint16_t num_free_bytes_leaf = total_leaf_node_size - (max_keys * sizeof(tKey) + max_keys * sizeof(tTid) + LEAF_FIXED_SIZE);
 
-    static MemoryManager* mm; // made it static as embedded class does not belong to the instance of the outer class
-    char* root;
+    using TreeMemoryManager = MemoryManager_t<total_inner_node_size, total_leaf_node_size, CHUNK_SIZE>;
+
+    byte* root;
+    TreeMemoryManager* _tmm;
 
     CsbTree(){
-        root = (char*) new (MemoryManager::getInstance().getMem((total_leaf_node_size))) CsbLeafNode();
+        _tmm = new TreeMemoryManager();
+        root = (byte*) new (_tmm->getMem(1, true)) CsbLeafNode();
     }
 
     struct CsbInnerNode{
         tKey keys[max_keys];
         uint16_t leaf;                    // 2B
         uint16_t num_keys;                // 2B
-        char* children;                   // 8B
+        byte* children;                   // 8B
         uint8_t free[num_free_bytes_inner];  // padding
 
 
@@ -87,31 +54,30 @@ struct CsbTree{
          * this function shifts all nodes past the insert index within the parents node group
          */
 
-        char* insert(uint16_t idx_to_insert){
+        byte* insert(uint16_t idx_to_insert, TreeMemoryManager* aTmm){
 
             uint32_t node_size;
-            char* memptr;
-            char* node_to_insert;
+            byte* memptr;
+            byte* node_to_insert;
 
             node_size = (isLeaf(this->children)) ? total_leaf_node_size : total_inner_node_size;
 
             // allocate new node group, 1 node larger than the old one
-            memptr = MemoryManager::getInstance().getMem((this->num_keys+1) * node_size);
+            memptr = aTmm->getMem(this->num_keys+1, isLeaf(this->children));
             // copy values to new group
             memcpy(memptr, this->children, idx_to_insert*node_size); // leading nodes
             memcpy(memptr + node_size*(idx_to_insert+1), this->children + node_size*(idx_to_insert), (this->num_keys-idx_to_insert)*node_size); // trailing nodes
             // shift keys in parent
             memmove(&this->keys[idx_to_insert+1], &this->keys[idx_to_insert], sizeof(tKey) * (this->num_keys-idx_to_insert));
 
-            MemoryManager::getInstance().release(this->children, this->num_keys * node_size);
-
+            aTmm->release(this->children, this->num_keys, isLeaf(this->children));
             // update the child ptr
             this->children = memptr;
 
             if (isLeaf(this->children)){
-                node_to_insert =  (char*) new (memptr + node_size*idx_to_insert) CsbLeafNode();
+                node_to_insert =  (byte*) new (memptr + node_size*idx_to_insert) CsbLeafNode();
             }else{
-                node_to_insert =  (char*) new (memptr + node_size*idx_to_insert) CsbInnerNode();
+                node_to_insert =  (byte*) new (memptr + node_size*idx_to_insert) CsbInnerNode();
             }
 
             return  node_to_insert - node_size; // returns a pointer to the left node, where the node group's containing child nodes have been copied from
@@ -126,11 +92,11 @@ struct CsbTree{
 
         void remove(uint16_t remove_idx){
             uint32_t child_node_size = (childrenIsLeaf(this)) ? total_leaf_node_size : total_inner_node_size;
-            char* memptr = mm->getInstance().getMem((this->num_keys-1) * child_node_size);
+            byte* memptr =_tmm->getMem(this->num_keys, isLeaf(this->children));
 
             memcpy(memptr, this->children, remove_idx*child_node_size);
             memcpy(memptr + (remove_idx*child_node_size), this->children + ((remove_idx+1) * child_node_size), (this->num_keys-1-remove_idx) * child_node_size);
-            mm->getInstance().release(this->children, child_node_size*this->num_keys);
+            _tmm->release(this->children, this->num_keys, isLeaf(this->children));
 
             this->children = memptr;
             memmove(&this->keys[remove_idx], &this->keys[remove_idx+1], (this->num_keys-1-remove_idx)*sizeof(tKey));
@@ -224,13 +190,13 @@ struct CsbTree{
         CsbLeafNode* leaf_to_insert = findLeafNode(key, &path);
 
         // if there is space, just insert
-        if (!isFull((char*) leaf_to_insert)){
+        if (!isFull((byte*) leaf_to_insert)){
             leaf_to_insert->insert(key, tid);
             return;
         }
         // else split the node and see in which of the both nodes that have been split the key fits
 
-        leaf_to_insert = (CsbLeafNode*) split((char*) leaf_to_insert, &path);
+        leaf_to_insert = (CsbLeafNode*) split((byte*) leaf_to_insert, &path);
         if (key > leaf_to_insert->keys[leaf_to_insert->num_keys - 1]){
             (leaf_to_insert + 1)->insert(key, tid);
         }else{
@@ -257,31 +223,31 @@ struct CsbTree{
         }
     }
 
-    static uint16_t isLeaf(char* node){
+    static uint16_t isLeaf(byte* node){
         return ((CsbInnerNode*) node)->leaf;
     }
 
-    static uint16_t childrenIsLeaf(char* node){
+    static uint16_t childrenIsLeaf(byte* node){
         return ((CsbInnerNode*)(((CsbInnerNode*) node)->children))->leaf;
     }
 
-    static uint16_t isFull(char* node){
+    static uint16_t isFull(byte* node){
         return ((CsbInnerNode*) node)->num_keys >= max_keys;
     }
 
-    static uint16_t getNumKeys(char* node){
+    static uint16_t getNumKeys(byte* node){
         return ((CsbInnerNode*) node)->num_keys;
     }
 
-    static tKey getLargestKey(char* node){
+    static tKey getLargestKey(byte* node){
         return ((CsbInnerNode*) node)->keys[((CsbInnerNode*) node)->num_keys -1];
     }
 
-    char* split(char* node_to_split, std::stack<CsbInnerNode*>* path){
+    byte* split(byte* node_to_split, std::stack<CsbInnerNode*>* path){
 
         uint16_t  node_to_split_index;
-        char* splitted_right;
-        char* splitted_left;
+        byte* splitted_right;
+        byte* splitted_left;
         CsbInnerNode* parent_node;
         uint16_t num_keys_left_split;
         uint16_t num_keys_right_split;
@@ -298,16 +264,16 @@ struct CsbTree{
             num_keys_left_split = ceil(parent_node->num_keys/2.0);
             num_keys_right_split = parent_node->num_keys - num_keys_left_split;
 
-            parent_node = new (MemoryManager::getInstance().getMem(total_inner_node_size)) CsbInnerNode();
-            MemoryManager::getInstance().release(this->root, (isLeaf(this->root)) ? total_leaf_node_size : total_inner_node_size);
+            parent_node = new (_tmm->getMem(1, false)) CsbInnerNode();
+            _tmm->release(this->root, 1, isLeaf(this->root));
             parent_node->children = this->root;
             parent_node->num_keys = 1;
             parent_node->keys[0] = getLargestKey(this->root);
-            this->root = (char*) parent_node;
+            this->root = (byte*) parent_node;
         }
 
-        if (isFull((char*) parent_node)) {
-            char* splitted_nodes = split((char *) parent_node, path);
+        if (isFull((byte*) parent_node)) {
+            byte* splitted_nodes = split((byte*) parent_node, path);
             if (getLargestKey(splitted_nodes) > getLargestKey(node_to_split) ){ // if the largest key of the left parent is smaller than the highest key of the nod to be splitted
                 parent_node = (CsbInnerNode*) splitted_nodes; // mark the left node as the parent for the 2 nodes that will be created by the split
             }else{
@@ -318,7 +284,7 @@ struct CsbTree{
 
         // split this node
         node_to_split_index = (node_to_split - parent_node->children) / node_size;
-        splitted_left = parent_node->insert(node_to_split_index + 1);
+        splitted_left = parent_node->insert(node_to_split_index + 1, _tmm);
         splitted_right = splitted_left + node_size;
 
         if (isLeaf(splitted_left)){
@@ -335,10 +301,10 @@ struct CsbTree{
         parent_node->keys[node_to_split_index +1] = getLargestKey(splitted_right);
         parent_node->num_keys +=1;
 
-        return (char*) splitted_left;
+        return (byte*) splitted_left;
     }
 
-    static char* getKthNode(uint16_t k, char* first_child){
+    static byte* getKthNode(uint16_t k, byte* first_child){
         return first_child + k*(isLeaf(first_child) ? total_leaf_node_size : total_inner_node_size);
     }
 

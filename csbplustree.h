@@ -13,8 +13,11 @@
 #include <math.h>
 #include <stack>
 #include <memory.h>
-#include "MemoryHandler.h"
+#include "BitsetMemoryHandler.h"
 #include <cstddef>
+
+
+typedef std::byte byte;
 
 template <class tKey, class tTid, uint16_t num_cachelines>
 
@@ -27,7 +30,7 @@ struct CsbTree{
     static const uint32_t total_leaf_node_size = num_cachelines_leaf_node * CACHE_LINE_SIZE;
     static const uint16_t num_free_bytes_leaf = total_leaf_node_size - (max_keys * sizeof(tKey) + max_keys * sizeof(tTid) + LEAF_FIXED_SIZE);
 
-    using TreeMemoryManager = MemoryManager_t<total_inner_node_size, total_leaf_node_size, CHUNK_SIZE>;
+    using TreeMemoryManager = BitSetMemoryHandler::MemoryManager_t<total_inner_node_size, total_leaf_node_size, CHUNK_SIZE>;
 
     byte* root;
     TreeMemoryManager* _tmm;
@@ -36,6 +39,7 @@ struct CsbTree{
         _tmm = new TreeMemoryManager();
         root = (byte*) new (_tmm->getMem(1, true)) CsbLeafNode();
     }
+
 
     struct CsbInnerNode{
         tKey keys[max_keys];
@@ -104,6 +108,11 @@ struct CsbTree{
         }
 
     } __attribute__((packed));
+
+
+    struct InnerNodeGroup {
+
+    };
 
     struct CsbLeafNode {
         tKey keys[max_keys];

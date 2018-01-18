@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include "csbplustree.h"
+#include "../lib/csbplustree.h"
 
-#include "ChunkrefMemoryHandler.h"
+#include "../lib/ChunkrefMemoryHandler.h"
 
 
 using namespace ChunkRefMemoryHandler;

@@ -4,5 +4,5 @@ project(csbplustree)
 set(CMAKE_CXX_STANDARD 17)
 
 
-set(SOURCE_FILES test_ChunkrefMemoryHandler.cpp)
+set(SOURCE_FILES tests/test_ChunkrefMemoryHandler.cpp)
 add_executable(csbplustree ${SOURCE_FILES})

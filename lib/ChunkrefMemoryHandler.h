@@ -45,7 +45,7 @@ namespace ChunkRefMemoryHandler {
     } __attribute__((packed));
 
 
-    template<uint16_t kChunkSize, uint8_t kCacheLineSize>
+    template<uint16_t kChunkSize, uint8_t kCacheLineSize, bool kBestFit>
     class MemoryChunk_t {
     public:
         MemoryChunk_t() {
@@ -64,7 +64,7 @@ namespace ChunkRefMemoryHandler {
         byte *getMem(uint16_t aSize) {
             // assert to have a size of at least one cache line to assure a UnusedMemorySubchunk will fit
             aSize = roundUp(aSize);
-            return firstFit(aSize);
+            return (kBestFit) ? bestFit(aSize) : firstFit(aSize);
         };
 
         void release(byte *aStartAddr, uint16_t aSize) {
@@ -184,11 +184,11 @@ namespace ChunkRefMemoryHandler {
         }
     };
 
-    template<uint16_t kChunkSize, uint8_t kCacheLineSize>
+    template<uint16_t kChunkSize, uint8_t kCacheLineSize, bool kBestFit>
     class MemoryHandler_t {
     public:
         MemoryHandler_t() {
-            _chunks.push_back(MemoryChunk_t<kChunkSize, kCacheLineSize>());
+            _chunks.push_back(ThisMemoryChunk_t());
         }
 
         byte *getMem(uint16_t aSize) {
@@ -202,7 +202,7 @@ namespace ChunkRefMemoryHandler {
                     return lFreeMem;
                 }
             }
-            _chunks.push_back(MemoryChunk_t<kChunkSize, kCacheLineSize>());
+            _chunks.push_back(ThisMemoryChunk_t());
             return _chunks.back().getMem(aSize);
         }
 
@@ -221,7 +221,8 @@ namespace ChunkRefMemoryHandler {
         }
 
     private:
-        std::vector<MemoryChunk_t< kChunkSize, kCacheLineSize>> _chunks;
+        using ThisMemoryChunk_t = MemoryChunk_t< kChunkSize, kCacheLineSize, kBestFit>;
+        std::vector<ThisMemoryChunk_t> _chunks;
 
     };
 };

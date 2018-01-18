@@ -4,11 +4,11 @@
 #include "../lib/ChunkrefMemoryHandler.h"
 
 
-using namespace ChunkRefMemoryHandler;
 
 int main() {
 
-    MemoryHandler_t<1024, 64> memoryHandler = MemoryHandler_t<1024, 64>();
+    using BestFitMemHandler_t = ChunkRefMemoryHandler::MemoryHandler_t<1024, 64, true>;
+    BestFitMemHandler_t memoryHandler = BestFitMemHandler_t();
 
     byte  *someAddr, *someAddr2, *someAddr3, *someAddr4, *someAddr5, *someAddr6, *someAddr7;
     someAddr = memoryHandler.getMem(128);

@@ -13,44 +13,95 @@
 #include <math.h>
 #include <stack>
 #include <memory.h>
-#include "BitsetMemoryHandler.h"
 #include <cstddef>
+#include "ChunkrefMemoryHandler.h"
 
 
 typedef std::byte byte;
 
-namespace CsbTree {
+namespace GroupedCsbPlusTree {
 
-    template<class tKey, class tTid, uint16_t num_cachelines>
+    template<class Key_t, class Tid_t, uint16_t kNumCacheLines, uint16_t kSizeCacheLine>
+
+    static constexpr bool           kBestFit = True;
+    static constexpr uint16_t       kSizeChunk = 1000;
+
+    static constexpr uint16_t       kSizeInnerNode_t = kSizeCacheLine * kNumCacheLines;
+    static constexpr uint16_t       kSizeFixedInnerNode_t = 10;
+    static constexpr uint16_t       kMaxKeysInnerNode_t = (kSizeInnerNode_t - kSizeFixedInnerNode_t) / sizeof(Key_t);
+    static constexpr uint16_t       kSizePaddingInnerNode_t = kSizeFixedInnerNode_t - (kMaxKeysInnerNode_t * sizeof(Key_t)) - kSizeFixedInnerNode_t;
+
+    static constexpr uint16_t       kSizeLeafNode_t = kSizeCacheLine * kNumCacheLines;
+    static constexpr uint16_t       kSizeFixedLeafNode_t = 2;
+    static constexpr uint16_t       kMaxKeysLeafNode_t = (kSizeLeafNode_t - kSizeFixedLeafNode_t) / (sizeof(Key_t) + sizeof(Tid_t));
+    static constexpr uint16_t       kSizePaddingLeafNode_t = kSizeFixedLeafNode_t - (kMaxKeysLeafNode_t * (sizeof(Key_t) + sizeof(Tid_t))) - kSizeFixedLeafNode_t;
 
     struct CsbTree {
-        static const uint32_t total_inner_node_size = CACHE_LINE_SIZE * num_cachelines;
-        static const uint16_t max_keys = (total_inner_node_size - FIXED_SIZE) / sizeof(tKey);
-        static const uint16_t num_free_bytes_inner = total_inner_node_size - (max_keys * sizeof(tKey) + FIXED_SIZE);
 
-        static const uint16_t num_cachelines_leaf_node = ceil(
-                (max_keys * sizeof(tKey) + max_keys * sizeof(tTid) + LEAF_FIXED_SIZE) / 64.0);
-        static const uint32_t total_leaf_node_size = num_cachelines_leaf_node * CACHE_LINE_SIZE;
-        static const uint16_t num_free_bytes_leaf =
-                total_leaf_node_size - (max_keys * sizeof(tKey) + max_keys * sizeof(tTid) + LEAF_FIXED_SIZE);
+        using TreeMemoryManager_t = ChunkRefMemoryHandler::MemoryHandler_t< kSizeChunk, kSizeCacheLine, kBestFit>;
 
-        using TreeMemoryManager = BitSetMemoryHandler::MemoryManager_t<total_inner_node_size, total_leaf_node_size, CHUNK_SIZE>;
-
-        byte *root;
-        TreeMemoryManager *_tmm;
+        byte * root;
+        TreeMemoryManager_t * tmm_;
 
         CsbTree() {
-            _tmm = new TreeMemoryManager();
-            root = (byte *) new(_tmm->getMem(1, true)) CsbLeafNode();
+            tmm_ = new TreeMemoryManager_t();
+            //TODO
+            // root =
         }
 
 
+        class InnerNodeGroup_t {
+        public:
+            CsbInnerNode members_[];
+
+            InnerNodeGroup_t(uint16_t aNumNodes){
+                InnerNodeGroup_t * lNg = (InnerNodeGroup_t *) tmm_->getMem(kSizeInnerNode_t * aNumNodes);
+                setLeafIndicator(0, aNumNodes);
+            }
+
+            void setLeafIndicator(uint8_t aIsLeaf, uint16_t aNumNodes){
+                (uint8_t) members_[aNumNodes + 1] = aIsLeaf;
+            }
+
+            uint8_t getLeafIndicator(aNumNodes){
+                return (uint8_t) members_[aNumNodes + 1];
+            }
+        };
+
+        class LeafNodeGroup_t {
+            CsbLeafNode* members_;
+
+            LeafNodeGroup_t(uint16_t aNumNodes)  {
+                LeafNodeGroup_t lNg = (LeafNodeGroup_t *) tmm_->getMem(kSizeLeafNode_t + kSizeFixedLeafNode_t);
+            };
+
+            void setLeafIndicator(uint8_t aIsLeaf, uint16_t aNumNodes){
+                (uint8_t) members_[aNumNodes + 1] = aIsLeaf;
+            }
+
+            uint8_t getLeafIndicator(uint16_t aNumNodes){
+                return (uint8_t) members_[aNumNodes + 1];
+            }
+
+            LeafNodeGroup_t* getPrecedingNodeGroup(uint16_t aNumNodes){
+                return  (LeafNodeGroup_t *) (((byte*) members_ + aNumNodes + 1) + 1);
+            }
+
+            uint8_t getLeafIndicator(aNumNodes){
+                return (uint8_t) members_[aNumNodes + 1];
+            }
+
+
+
+
+
+        };
+
         struct CsbInnerNode {
             tKey keys[max_keys];
-            uint16_t leaf;                    // 2B
             uint16_t num_keys;                // 2B
             byte *children;                   // 8B
-            uint8_t free[num_free_bytes_inner];  // padding
+            uint8_t free[kSizePaddingInnerNode_t];  // padding
 
 
             CsbInnerNode() {
@@ -126,11 +177,8 @@ namespace CsbTree {
 
         struct CsbLeafNode {
             tKey keys[max_keys];
-            uint16_t leaf;                    // 2B
             uint16_t num_keys;                // 2B
             tTid tids[max_keys];
-            CsbLeafNode *preceding_node;             // 8B
-            CsbLeafNode *following_node;             // 8B
             uint8_t free[num_free_bytes_leaf];   // padding
 
 

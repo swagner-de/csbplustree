@@ -26,16 +26,16 @@ namespace ChunkRefMemoryHandler {
 
     class UnusedMemorySubchunk_t {
     public:
-        uint16_t _size; // 2B
-        UnusedMemorySubchunk_t *_nextFree; // 8B
+        uint16_t size_; // 2B
+        UnusedMemorySubchunk_t *nextFree_; // 8B
 
         UnusedMemorySubchunk_t(uint16_t aSize) {
-            _size = aSize;
+            size_ = aSize;
         }
 
         UnusedMemorySubchunk_t(uint16_t aSize, UnusedMemorySubchunk_t *aNextFree) {
-            _nextFree = aNextFree;
-            _size = aSize;
+            nextFree_ = aNextFree;
+            size_ = aSize;
         }
 
         byte *deliver() {
@@ -45,20 +45,20 @@ namespace ChunkRefMemoryHandler {
     } __attribute__((packed));
 
 
-    template<uint16_t kChunkSize, uint8_t kCacheLineSize, bool kBestFit>
+    template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
     class MemoryChunk_t {
     public:
         MemoryChunk_t() {
-            if (posix_memalign((void **) &_begin, kCacheLineSize, kChunkSize)) {
+            if (posix_memalign((void **) &begin_, kSizeCacheLine, kSizeChunk)) {
                 throw MemAllocFailedException();
             }
-            new(_begin) UnusedMemorySubchunk_t(kChunkSize);
-            _firstFree = (UnusedMemorySubchunk_t *) _begin;
+            new(begin_) UnusedMemorySubchunk_t(kSizeChunk);
+            firstFree_ = (UnusedMemorySubchunk_t *) begin_;
         }
 
         ~MemoryChunk_t() {
             // TODO release memory
-            //free((void *) _begin);
+            //free((void *) begin_);
         }
 
         byte *getMem(uint16_t aSize) {
@@ -72,21 +72,21 @@ namespace ChunkRefMemoryHandler {
             aSize = roundUp(aSize);
 
             // find the free chunk immediately before the area to be released
-            UnusedMemorySubchunk_t *lCurrentChunk = _firstFree;
+            UnusedMemorySubchunk_t *lCurrentChunk = firstFree_;
             UnusedMemorySubchunk_t *lReleasedChunk;
 
             while ((byte *) lCurrentChunk < aStartAddr) {
-                lCurrentChunk = lCurrentChunk->_nextFree;
+                lCurrentChunk = lCurrentChunk->nextFree_;
             }
 
             // if the two chunks could be merged, do so
-            if (aStartAddr + aSize == (byte *) lCurrentChunk->_nextFree) {
-                lCurrentChunk->_size += aSize;
+            if (aStartAddr + aSize == (byte *) lCurrentChunk->nextFree_) {
+                lCurrentChunk->size_ += aSize;
             } else {
                 // create a new chunk and correct the links
                 lReleasedChunk = new(aStartAddr) UnusedMemorySubchunk_t(aSize);
-                lReleasedChunk->_nextFree = lCurrentChunk->_nextFree;
-                lCurrentChunk->_nextFree = lReleasedChunk;
+                lReleasedChunk->nextFree_ = lCurrentChunk->nextFree_;
+                lCurrentChunk->nextFree_ = lReleasedChunk;
             }
         }
 
@@ -95,49 +95,49 @@ namespace ChunkRefMemoryHandler {
         }
 
         inline bool contains(byte *aAddr) {
-            return ((_begin <= aAddr)
+            return ((begin_ <= aAddr)
                     &&
-                    (_begin + kChunkSize > aAddr));
+                    (begin_ + kSizeChunk > aAddr));
         }
 
         inline bool isFullyUnallocated() {
-            return (_firstFree->_size == kChunkSize);
+            return (firstFree_->size_ == kSizeChunk);
         }
 
     private:
-        byte *_begin;
-        UnusedMemorySubchunk_t *_firstFree;
+        byte *begin_;
+        UnusedMemorySubchunk_t *firstFree_;
 
         inline uint16_t roundUp(uint16_t aSize) {
-            uint8_t remainder = aSize % kCacheLineSize;
+            uint8_t remainder = aSize % kSizeCacheLine;
             if (remainder == 0) return aSize;
-            else return aSize + kCacheLineSize - remainder;
+            else return aSize + kSizeCacheLine - remainder;
         }
 
 
         byte *firstFit(uint16_t aSize) {
-            UnusedMemorySubchunk_t **lPreviousChunkNextFree = &_firstFree;
-            UnusedMemorySubchunk_t *lCurrent = _firstFree;
+            UnusedMemorySubchunk_t **lPreviousChunkNextFree = &firstFree_;
+            UnusedMemorySubchunk_t *lCurrent = firstFree_;
             UnusedMemorySubchunk_t *lRemaining;
             while (lCurrent != nullptr && this->contains(lCurrent)) {
 
-                int16_t lRemainingSize = lCurrent->_size - aSize;
+                int16_t lRemainingSize = lCurrent->size_ - aSize;
 
                 if (lRemainingSize >= 0) {
                     // if remaining memory is larger than the requested create a new UnusedMemorySubchunk
                     if (lRemainingSize > 0) {
                         // create a new UnusedMemorySubchunk at the end of the requested memory
                         lRemaining = new(((byte *) lCurrent) + aSize)
-                                UnusedMemorySubchunk_t(lRemainingSize, lCurrent->_nextFree);
+                                UnusedMemorySubchunk_t(lRemainingSize, lCurrent->nextFree_);
                         *lPreviousChunkNextFree = lRemaining;
                     } else {
                         // if no space remains
-                        *lPreviousChunkNextFree = lCurrent->_nextFree;
+                        *lPreviousChunkNextFree = lCurrent->nextFree_;
                     }
                     return lCurrent->deliver();
                 }
-                lPreviousChunkNextFree = &lCurrent->_nextFree;
-                lCurrent = lCurrent->_nextFree;
+                lPreviousChunkNextFree = &lCurrent->nextFree_;
+                lCurrent = lCurrent->nextFree_;
             }
             return nullptr;
         }
@@ -154,11 +154,11 @@ namespace ChunkRefMemoryHandler {
             BestFittingChunk_t lBestFitting = BestFittingChunk_t();
             lBestFitting._remainingSize = UINT16_MAX;
 
-            UnusedMemorySubchunk_t **lPreviousChunkNextFree = &_firstFree;
-            UnusedMemorySubchunk_t *lCurrent = _firstFree;
+            UnusedMemorySubchunk_t **lPreviousChunkNextFree = &firstFree_;
+            UnusedMemorySubchunk_t *lCurrent = firstFree_;
 
             while (lCurrent != nullptr && this->contains(lCurrent)) {
-                int16_t lRemainingSize = lCurrent->_size - aSize;
+                int16_t lRemainingSize = lCurrent->size_ - aSize;
                 if (lRemainingSize >= aSize &&
                     lRemainingSize < lBestFitting._remainingSize) {
                     lBestFitting._remainingSize = lRemainingSize;
@@ -167,49 +167,49 @@ namespace ChunkRefMemoryHandler {
 
                     if (lRemainingSize == 0) break;
                 }
-                lPreviousChunkNextFree = &lCurrent->_nextFree;
-                lCurrent = lCurrent->_nextFree;
+                lPreviousChunkNextFree = &lCurrent->nextFree_;
+                lCurrent = lCurrent->nextFree_;
             }
 
             if (lBestFitting._self == nullptr) {
                 return nullptr;
             } else if (lBestFitting._remainingSize == 0) {
-                *lBestFitting._previousChunkNextFree = lBestFitting._self->_nextFree;
+                *lBestFitting._previousChunkNextFree = lBestFitting._self->nextFree_;
                 return lBestFitting._self->deliver();
             } else {
                 *lBestFitting._previousChunkNextFree =
                         new(((byte *) lBestFitting._self) + aSize)
-                                UnusedMemorySubchunk_t(lBestFitting._remainingSize, lBestFitting._self->_nextFree);
+                                UnusedMemorySubchunk_t(lBestFitting._remainingSize, lBestFitting._self->nextFree_);
             }
         }
     };
 
-    template<uint16_t kChunkSize, uint8_t kCacheLineSize, bool kBestFit>
+    template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
     class MemoryHandler_t {
     public:
         MemoryHandler_t() {
-            _chunks.push_back(ThisMemoryChunk_t());
+            chunks_.push_back(ThisMemoryChunk_t());
         }
 
         byte *getMem(uint16_t aSize) {
-            if (aSize > kChunkSize){
+            if (aSize > kSizeChunk){
                 throw MemAllocTooLarge();
             }
             byte *lFreeMem;
-            for (auto lIt = _chunks.begin(); lIt != _chunks.end(); ++lIt) {
+            for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
                 lFreeMem = lIt->getMem(aSize);
                 if (lFreeMem != nullptr) {
                     return lFreeMem;
                 }
             }
-            _chunks.push_back(ThisMemoryChunk_t());
-            return _chunks.back().getMem(aSize);
+            chunks_.push_back(ThisMemoryChunk_t());
+            return chunks_.back().getMem(aSize);
         }
 
         void release(byte *aStartAddr, uint16_t aSize) {
 
             // find the chunk that contains the startAddr
-            for (auto lIt = _chunks.begin(); lIt != _chunks.end(); ++lIt) {
+            for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
                 if (lIt->contains(aStartAddr)) {
                     lIt->release(aStartAddr, aSize);
                     if (lIt->isFullyUnallocated()) {
@@ -221,9 +221,29 @@ namespace ChunkRefMemoryHandler {
         }
 
     private:
-        using ThisMemoryChunk_t = MemoryChunk_t< kChunkSize, kCacheLineSize, kBestFit>;
-        std::vector<ThisMemoryChunk_t> _chunks;
+        using ThisMemoryChunk_t = MemoryChunk_t< kSizeChunk, kSizeCacheLine, kBestFit>;
+        std::vector<ThisMemoryChunk_t> chunks_;
 
+    };
+    
+    template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit, uint16_t kSizeInnerNode, uint16_t kSizeLeafNode>
+    class NodeMemoryManager{
+        NodeMemoryManager(){
+            handler_ = ThisMemoryHandler_t();
+        }
+
+        byte * getMem(uint16_t aNumNodes, bool aLeafIndicator) {
+            return handler_.getMem(aNumNodes * (aLeafIndicator) ? kSizeLeafNode : kSizeInnerNode);
+        }
+
+        void release(byte * aStartAddr, uint16_t aNumNodes, bool aLeafIndicator) {
+            handler_.release(aStartAddr, aNumNodes * (aLeafIndicator) ? kSizeLeafNode : kSizeInnerNode);
+        }
+
+
+    private:
+        using ThisMemoryHandler_t = MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>;
+        ThisMemoryHandler_t handler_;
     };
 };
 #endif //CSBPLUSTREE_CHUNKREFMEMORYHANDLER_H

@@ -16,22 +16,22 @@ namespace BitSetMemoryHandler {
     struct MemoryChunk_t {
 
         MemoryChunk_t() {
-            if (posix_memalign((void **) &_begin, 64, kNodeSize * kChunkSize)) {
+            if (posix_memalign((void **) &begin_, 64, kNodeSize * kChunkSize)) {
                 printf("Error allocating memory\n");
             }
-            _used.reset();
+            used_.reset();
         }
 
 
         // TODO throw exception here
         byte *getChunk(uint16_t aNumNodes) {
-            if (_used.all()) {
+            if (used_.all()) {
                 return nullptr;
             }
             uint32_t lSlot = 0;
             uint32_t lFreeCounter = 0;
-            while (lSlot < _used.size() && lFreeCounter < aNumNodes) {
-                if (!_used[lSlot]) {
+            while (lSlot < used_.size() && lFreeCounter < aNumNodes) {
+                if (!used_[lSlot]) {
                     lFreeCounter += 1;
                 } else {
                     lFreeCounter = 0;
@@ -42,31 +42,31 @@ namespace BitSetMemoryHandler {
                 return nullptr;
             }
             setBits((lSlot - lFreeCounter), lSlot - 1, true);
-            return _begin + ((lSlot - lFreeCounter) * kNodeSize);
+            return begin_ + ((lSlot - lFreeCounter) * kNodeSize);
         }
 
         bool contains(byte *aAddr) {
-            return ((_begin <= aAddr)
+            return ((begin_ <= aAddr)
                     &&
-                    (aAddr < &_begin[kChunkSize * kNodeSize])
+                    (aAddr < &begin_[kChunkSize * kNodeSize])
             );
         }
 
         void release(byte *aStartAddr, uint16_t aNumNodes) {
-            uint32_t lStartIdx = (aStartAddr - _begin) / kNodeSize;
+            uint32_t lStartIdx = (aStartAddr - begin_) / kNodeSize;
             setBits(lStartIdx, lStartIdx + aNumNodes - 1, false);
         }
 
     private:
-        byte *_begin;
-        std::bitset<kChunkSize> _used;
+        byte *begin_;
+        std::bitset<kChunkSize> used_;
 
         /*
          * sets the bits to the requested value including the start and end index
          */
         void setBits(uint32_t aBegin, uint32_t aEnd, bool value) {
             while (aBegin != aEnd + 1) {
-                _used[aBegin] = value;
+                used_[aBegin] = value;
                 aBegin++;
             };
         }
@@ -89,36 +89,36 @@ namespace BitSetMemoryHandler {
 
 
     private:
-        std::vector<InnerNodeMemoryChunk_t> _InnerNodeChunks;
-        std::vector<LeafNodeMemoryChunk_t> _LeafNodeChunks;
+        std::vector<InnerNodeMemoryChunk_t> InnerNodeChunks_;
+        std::vector<LeafNodeMemoryChunk_t> LeafNodeChunks_;
 
 
         // TODO use function template instead
         byte *getMemLeaf(uint16_t aNumNodes) {
-            for (auto lIt = _LeafNodeChunks.begin(); lIt != _LeafNodeChunks.end(); ++lIt) {
+            for (auto lIt = LeafNodeChunks_.begin(); lIt != LeafNodeChunks_.end(); ++lIt) {
                 byte *lMemPtr = lIt->getChunk(aNumNodes);
                 if (lMemPtr != nullptr) {
                     return lMemPtr;
                 }
             }
-            _LeafNodeChunks.push_back(LeafNodeMemoryChunk_t());
-            return _LeafNodeChunks.back().getChunk(aNumNodes);
+            LeafNodeChunks_.push_back(LeafNodeMemoryChunk_t());
+            return LeafNodeChunks_.back().getChunk(aNumNodes);
         }
 
         byte *getMemInner(uint16_t aNumNodes) {
-            for (auto lIt = _LeafNodeChunks.begin(); lIt != _LeafNodeChunks.end(); ++lIt) {
+            for (auto lIt = LeafNodeChunks_.begin(); lIt != LeafNodeChunks_.end(); ++lIt) {
                 byte *lMemPtr = lIt->getChunk(aNumNodes);
                 if (lMemPtr != nullptr) {
                     return lMemPtr;
                 }
             }
-            _LeafNodeChunks.push_back(LeafNodeMemoryChunk_t());
-            return _LeafNodeChunks.back().getChunk(aNumNodes);
+            LeafNodeChunks_.push_back(LeafNodeMemoryChunk_t());
+            return LeafNodeChunks_.back().getChunk(aNumNodes);
         }
 
         // TODO use function template instead
         void releaseLeaf(byte *aStartAddr, uint16_t aNumNodes) {
-            for (auto lIt = _LeafNodeChunks.begin(); lIt != _LeafNodeChunks.end(); ++lIt) {
+            for (auto lIt = LeafNodeChunks_.begin(); lIt != LeafNodeChunks_.end(); ++lIt) {
                 if (lIt->contains(aStartAddr)) {
                     lIt->release(aStartAddr, aNumNodes);
                 }
@@ -126,7 +126,7 @@ namespace BitSetMemoryHandler {
         }
 
         void releaseInner(byte *aStartAddr, uint16_t aNumNodes) {
-            for (auto lIt = _InnerNodeChunks.begin(); lIt != _InnerNodeChunks.end(); ++lIt) {
+            for (auto lIt = InnerNodeChunks_.begin(); lIt != InnerNodeChunks_.end(); ++lIt) {
                 if (lIt->contains(aStartAddr)) {
                     lIt->release(aStartAddr, aNumNodes);
                 }

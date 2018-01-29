@@ -12,11 +12,11 @@ namespace BitSetMemoryHandler {
 
     using byte = std::byte;
 
-    template<uint32_t kNodeSize, uint32_t kChunkSize>
+    template<uint32_t kNodeSize, uint32_t kSizeCacheLine, uint32_t kChunkSize>
     struct MemoryChunk_t {
 
         MemoryChunk_t() {
-            if (posix_memalign((void **) &begin_, 64, kNodeSize * kChunkSize)) {
+            if (posix_memalign((void **) &this->begin_, kSizeCacheLine, kChunkSize)) {
                 printf("Error allocating memory\n");
             }
             used_.reset();
@@ -72,10 +72,10 @@ namespace BitSetMemoryHandler {
         }
     };
 
-    template<uint32_t kInnerNodeSize, uint32_t kLeafNodeSize, uint32_t kChunkSize>
+    template<uint32_t kInnerNodeSize, uint32_t kLeafNodeSize, uint32_t kChunkSize, uint32_t kSizeCacheLine>
     struct MemoryManager_t {
-        using InnerNodeMemoryChunk_t = MemoryChunk_t<kInnerNodeSize, kChunkSize>;
-        using LeafNodeMemoryChunk_t = MemoryChunk_t<kLeafNodeSize, kChunkSize>;
+        using InnerNodeMemoryChunk_t = MemoryChunk_t<kInnerNodeSize, kChunkSize, kSizeCacheLine>;
+        using LeafNodeMemoryChunk_t = MemoryChunk_t<kLeafNodeSize, kChunkSize, kSizeCacheLine>;
 
 
         byte *getMem(uint16_t aNumNodes, bool aLeafIndicator) {
@@ -93,7 +93,6 @@ namespace BitSetMemoryHandler {
         std::vector<LeafNodeMemoryChunk_t> LeafNodeChunks_;
 
 
-        // TODO use function template instead
         byte *getMemLeaf(uint16_t aNumNodes) {
             for (auto lIt = LeafNodeChunks_.begin(); lIt != LeafNodeChunks_.end(); ++lIt) {
                 byte *lMemPtr = lIt->getChunk(aNumNodes);
@@ -116,7 +115,6 @@ namespace BitSetMemoryHandler {
             return LeafNodeChunks_.back().getChunk(aNumNodes);
         }
 
-        // TODO use function template instead
         void releaseLeaf(byte *aStartAddr, uint16_t aNumNodes) {
             for (auto lIt = LeafNodeChunks_.begin(); lIt != LeafNodeChunks_.end(); ++lIt) {
                 if (lIt->contains(aStartAddr)) {

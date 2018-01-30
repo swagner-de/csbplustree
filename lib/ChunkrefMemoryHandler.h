@@ -183,17 +183,17 @@ namespace ChunkRefMemoryHandler {
             struct BestFittingChunk_t {
                 UnusedMemorySubchunk_t *_self;
                 UnusedMemorySubchunk_t **_previousChunkNextFree;
-                uint16_t _remainingSize;
+                uint32_t _remainingSize;
             };
 
             BestFittingChunk_t lBestFitting = BestFittingChunk_t();
-            lBestFitting._remainingSize = UINT16_MAX;
+            lBestFitting._remainingSize = UINT32_MAX;
 
             UnusedMemorySubchunk_t **lPreviousChunkNextFree = &firstFree_;
             UnusedMemorySubchunk_t *lCurrent = firstFree_;
 
             while (lCurrent != nullptr && this->contains(lCurrent)) {
-                int16_t lRemainingSize = lCurrent->size_ - aSize;
+                int32_t lRemainingSize = lCurrent->size_ - aSize;
                 if (lRemainingSize >= 0 &&
                     lRemainingSize < lBestFitting._remainingSize) {
                     lBestFitting._remainingSize = lRemainingSize;

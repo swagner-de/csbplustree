@@ -15,6 +15,9 @@
 #include "BitsetMemoryHandler.h"
 #include "ChunkrefMemoryHandler.h"
 #include <cstddef>
+#include <fstream>
+#include <string>
+#include <iostream>
 
 
 typedef std::byte byte;
@@ -34,7 +37,7 @@ private:
     static constexpr uint16_t       kNumCacheLinesPerLeafNode = ceil((kNumMaxKeys * (sizeof(Tid_t) + sizeof(Key_t)) + kSizeFixedLeafNode)/64.0);
     static constexpr uint32_t       kSizeLeafNode = kNumCacheLinesPerLeafNode * kSizeCacheLine;
     static constexpr uint16_t       kSizePaddingLeafNode = kSizeLeafNode - (kNumMaxKeys * (sizeof(Tid_t) + sizeof(Key_t)) + kSizeFixedLeafNode);
-    static constexpr uint16_t       kSizeMemoryChunk = kSizeLeafNode * 1000;
+    static constexpr uint32_t       kSizeMemoryChunk = kSizeLeafNode * 1000;
 
 
 
@@ -48,7 +51,8 @@ public:
     
     CsbTree_t(){
         tmm_ = new TreeMemoryManager_t();
-        root_ = (byte*) new (tmm_->getMem(1, true)) CsbLeafNode_t();
+        root_ = tmm_->getMem(1, true);
+        new (root_) CsbLeafNode_t;
         static_assert(kSizeInnerNode == sizeof(CsbInnerNode_t));
         static_assert(kSizeLeafNode == sizeof(CsbLeafNode_t));
         
@@ -150,8 +154,34 @@ public:
             this->numKeys_-= 1;
         }
 
+        std::string asJson(){
+            /*
+             * "text": {"name": "Parent node"},
+             *  "children": [....]
+             *
+             */
+
+            std::string lStringKeys = "";
+            std:: string lStringChildren = "\"children\": [";
+            // attach keys and children
+            for (int32_t i= 0; i<numKeys_; i++){
+                if (i!=0){
+                    lStringKeys.append(",");
+                }
+                lStringKeys.append(std::to_string(keys_[i]));
+                lStringChildren.append(kThChildrenAsJson(i, children_));
+                if (i+1 < numKeys_){
+                    lStringChildren.append(",");
+                }
+            }
+            lStringChildren.append("]");
+
+
+            return "{\"stackChildren\":true, \"text\": {\"name\": \"" + lStringKeys +"\"}," + lStringChildren + "}";;
+        }
+
     } __attribute__((packed));
-    
+
 
     struct CsbLeafNode_t {
         Key_t        keys_[kNumMaxKeys];
@@ -225,6 +255,19 @@ public:
             );
             this->numKeys_-=1;
         }
+
+        std::string asJson(){
+            /*
+             * "text": {"name": "Parent node"},
+             *  "children": [....]
+             *
+             */
+            std::string lJsonObj = "{\"text\":{\"name\":\"";
+            lJsonObj.append("keys: " + std::to_string(keys_[0]) + " - " + std::to_string(keys_[numKeys_ - 1]));
+            return lJsonObj.append("\"}}");
+        }
+
+
     } __attribute__((packed));
 
 
@@ -255,6 +298,10 @@ public:
         // find the leaf node to insert the key to and record the path upwards the tree
         std::stack<CsbInnerNode_t*> lPath;
         CsbLeafNode_t* lLeafNodeToInsert = findLeafNode(aKey, &lPath);
+
+        if (aKey == 9981){
+            std::cout<< aKey<< std::endl;
+        }
 
         // if there is space, just insert
         if (!isFull((byte*) lLeafNodeToInsert)){
@@ -290,6 +337,18 @@ public:
         }
     }
 
+    std::string getTreeAsJson(){
+        if (isLeaf(root_)){
+            return "{\"nodeStructure\":" + ((CsbLeafNode_t*) root_)->asJson() + "}";
+        }
+        return "{\"nodeStructure\":" + ((CsbInnerNode_t*)root_)->asJson() + "}";
+    }
+
+    void saveTreeAsJson(std::string aPath){ ;
+        std::ofstream file(aPath);
+        file << getTreeAsJson();
+    }
+
     static inline uint16_t isLeaf(CsbInnerNode_t* aNode){
         return aNode->leaf_;
     }
@@ -318,6 +377,14 @@ public:
         return ((CsbInnerNode_t*) aNode)->keys_[((CsbInnerNode_t*) aNode)->numKeys_-1];
     }
 
+    static inline std::string kThChildrenAsJson(uint32_t aK, byte* aFirstChild){
+        if (isLeaf(aFirstChild)){
+            return ((CsbLeafNode_t*) getKthNode(aK, aFirstChild))->asJson();
+        } else {
+            return ((CsbInnerNode_t*) getKthNode(aK, aFirstChild))->asJson();
+        }
+    }
+
     byte* split(byte* aNodeToSplit, std::stack<CsbInnerNode_t*>* aPath) {
 
         uint16_t  lIdxNodeToSplit;
@@ -340,11 +407,11 @@ public:
             lNumKeysRightSplit = lNodeParent->numKeys_- lNumKeysLeftSplit;
 
             lNodeParent = new (tmm_->getMem(1, false)) CsbInnerNode_t();
-            tmm_->release(this->root_, 1, isLeaf(this->root_));
             lNodeParent->children_ = this->root_;
             lNodeParent->numKeys_= 1;
             lNodeParent->keys_[0] = getLargesKey_t(this->root_);
             this->root_ = (byte*) lNodeParent;
+
         }
 
         if (isFull((byte*) lNodeParent)) {

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title></title>
+    <!-- stylesheets -->
+    <link rel="stylesheet" href="treant-js/Treant.css" type="text/css"/>
+</head>
+<body>
+    <input id="fI" type="file" style="position: fixed; top: 10px; left: 10px;">
+<div id="tree-simple" style="position: absolute; top: 0px; left: 0px;">
+
+</div>
+<!-- javascript -->
+<script src="treant-js/vendor/raphael.js"></script>
+<script src="treant-js/Treant.js"></script>
+<script>
+
+    var conf = {
+        chart: {
+            container : "#tree-simple",
+            levelSeparation: 70
+        }
+    };
+    var fileInput = document.getElementById('fI');
+
+    fileInput.addEventListener('change', function() {
+        var file = fileInput.files[0];
+
+        if (file.name.match(/\.(txt|json)$/)) {
+            var reader = new FileReader();
+
+            reader.onload = function() {
+                var my_chart = new Treant(Object.assign(conf, JSON.parse(reader.result)));
+            };
+
+            reader.readAsText(file);
+        } else {
+            alert("File not supported, .txt or .json files only");
+        }
+    });
+
+    fileInput.click();
+</script>
+</body>
+</html>

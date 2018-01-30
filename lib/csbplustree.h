@@ -29,21 +29,18 @@ private:
     static constexpr uint16_t       kSizeCacheLine = 64;
 
     static constexpr uint32_t       kSizeInnerNode = kSizeCacheLine * kNumCacheLinesPerInnerNode;
-    static constexpr uint16_t       kSizeFixedInnerNode = 12;
+    static constexpr uint16_t       kSizeFixedInnerNode = 10;
     static constexpr uint16_t       kNumMaxKeys = (kSizeInnerNode - kSizeFixedInnerNode) / sizeof(Key_t);
     static constexpr uint16_t       kSizePaddingInnerNode = kSizeInnerNode - (kNumMaxKeys * sizeof(Key_t) + kSizeFixedInnerNode);
 
-    static constexpr uint16_t       kSizeFixedLeafNode = 20;
+    static constexpr uint16_t       kSizeFixedLeafNode = 18;
     static constexpr uint16_t       kNumCacheLinesPerLeafNode = ceil((kNumMaxKeys * (sizeof(Tid_t) + sizeof(Key_t)) + kSizeFixedLeafNode)/64.0);
     static constexpr uint32_t       kSizeLeafNode = kNumCacheLinesPerLeafNode * kSizeCacheLine;
     static constexpr uint16_t       kSizePaddingLeafNode = kSizeLeafNode - (kNumMaxKeys * (sizeof(Tid_t) + sizeof(Key_t)) + kSizeFixedLeafNode);
     static constexpr uint32_t       kSizeMemoryChunk = kSizeLeafNode * 1000;
 
-
-
-    //using TreeMemoryManager_t_T = BitSetMemoryHandler::MemoryManager_t<kSizeInnerNode, kSizeLeafNode, kSizeMemoryChunks>;
     using TreeMemoryManager_t = ChunkRefMemoryHandler::NodeMemoryManager_t<kSizeMemoryChunk, kSizeCacheLine, 1, kSizeInnerNode, kSizeLeafNode>;
-
+    using byte = std::byte;
     byte* root_;
     TreeMemoryManager_t* tmm_;
 
@@ -59,13 +56,18 @@ public:
     }
 
 
-    struct CsbInnerNode_t{
-        Key_t       keys_[kNumMaxKeys];
-        uint16_t    leaf_;                    // 2B
-        uint16_t    numKeys_;                // 2B
-        byte*       children_;                   // 8B
-        uint8_t     free_[kSizePaddingInnerNode];  // padding
-        
+    class CsbInnerNode_t{
+        Key_t       keys_       [kNumMaxKeys];
+        uint16_t    leaf_       :1;
+        uint16_t    numKeys_    :15;
+        byte*       children_;
+        uint8_t     free_       [kSizePaddingInnerNode];  // padding
+
+        CsbInnerNode_t(){};
+        byte* insert(uint16_t aIdxToInsert, TreeMemoryManager_t* aTmm);
+        void splitKeys(CsbInnerNode_t* aNodeToSplit, uint16_t lNumKeysRemaining);
+        void remove(uint16_t aIdxToRemove);
+        std::string asJson();
 
 
         CsbInnerNode_t(){
@@ -183,14 +185,14 @@ public:
     } __attribute__((packed));
 
 
-    struct CsbLeafNode_t {
-        Key_t        keys_[kNumMaxKeys];
-        uint16_t     leaf_;                         // 2B
-        uint16_t     numKeys_;                      // 2B
-        Tid_t        tids_[kNumMaxKeys];
-        CsbLeafNode_t* preceding_node_;               // 8B
-        CsbLeafNode_t* following_node_;               // 8B
-        uint8_t      free_[kSizePaddingLeafNode];   // padding
+    class CsbLeafNode_t {
+        Key_t           keys_       [kNumMaxKeys];
+        uint16_t        leaf_       :1;
+        uint16_t        numKeys_    :15;
+        Tid_t           tids_       [kNumMaxKeys];
+        CsbLeafNode_t*  preceding_node_;
+        CsbLeafNode_t*  following_node_;
+        uint8_t         free_       [kSizePaddingLeafNode];   // padding
 
 
 

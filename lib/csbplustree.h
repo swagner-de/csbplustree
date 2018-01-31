@@ -39,35 +39,35 @@ private:
     static constexpr uint16_t       kSizePaddingLeafNode = kSizeLeafNode - (kNumMaxKeys * (sizeof(Tid_t) + sizeof(Key_t)) + kSizeFixedLeafNode);
     static constexpr uint32_t       kSizeMemoryChunk = kSizeLeafNode * 1000;
 
+
+
+    //using TreeMemoryManager_t_T = BitSetMemoryHandler::MemoryManager_t<kSizeInnerNode, kSizeLeafNode, kSizeMemoryChunks>;
     using TreeMemoryManager_t = ChunkRefMemoryHandler::NodeMemoryManager_t<kSizeMemoryChunk, kSizeCacheLine, 1, kSizeInnerNode, kSizeLeafNode>;
-    using byte = std::byte;
+
     byte* root_;
     TreeMemoryManager_t* tmm_;
 
 public:
-    
+
     CsbTree_t(){
         tmm_ = new TreeMemoryManager_t();
         root_ = tmm_->getMem(1, true);
         new (root_) CsbLeafNode_t;
         static_assert(kSizeInnerNode == sizeof(CsbInnerNode_t));
         static_assert(kSizeLeafNode == sizeof(CsbLeafNode_t));
-        
+
     }
 
 
     class CsbInnerNode_t{
+    public:
         Key_t       keys_       [kNumMaxKeys];
         uint16_t    leaf_       :1;
         uint16_t    numKeys_    :15;
         byte*       children_;
         uint8_t     free_       [kSizePaddingInnerNode];  // padding
 
-        CsbInnerNode_t(){};
-        byte* insert(uint16_t aIdxToInsert, TreeMemoryManager_t* aTmm);
-        void splitKeys(CsbInnerNode_t* aNodeToSplit, uint16_t lNumKeysRemaining);
-        void remove(uint16_t aIdxToRemove);
-        std::string asJson();
+
 
 
         CsbInnerNode_t(){
@@ -186,6 +186,7 @@ public:
 
 
     class CsbLeafNode_t {
+    public:
         Key_t           keys_       [kNumMaxKeys];
         uint16_t        leaf_       :1;
         uint16_t        numKeys_    :15;

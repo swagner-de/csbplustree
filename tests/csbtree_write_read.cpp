@@ -1,10 +1,10 @@
 #include <iostream>
-#include "../lib/csbplustree.h"
+#include "../lib/groupedCsbplustree.h"
 
 
 int main() {
     std::string basePath = "/home/sebas/dev/Uni/master_thesis/csbplustree/visual/trees/";
-    uint32_t savePoint = 8500;
+    uint32_t savePoint = 9915;
 
 
     CsbTree_t<uint32_t , uint32_t, 1>* tree = new CsbTree_t<uint32_t , uint32_t, 1>();

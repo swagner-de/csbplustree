@@ -18,6 +18,12 @@ namespace ChunkRefMemoryHandler {
         }
     };
 
+    class MemAddrNotPartofChunk : public std::exception {
+        virtual const char *what() const throw() {
+            return "The memory address is not part of this chunk.";
+        }
+    };
+
     class MemAllocTooLarge : public std::exception {
         virtual const char *what() const throw() {
             return "Requested memory is too large";
@@ -74,8 +80,20 @@ namespace ChunkRefMemoryHandler {
         byte *getMem(uint16_t aSize) {
             // assert to have a size of at least one cache line to assure a UnusedMemorySubchunk will fit
             aSize = roundUp(aSize);
-            return (kBestFit) ? bestFit(aSize) : firstFit(aSize);
+            byte* lAddr =(kBestFit) ? bestFit(aSize) : firstFit(aSize);
+            if (!contains(lAddr)){
+                throw MemAddrNotPartofChunk();
+            } else return lAddr;
         };
+
+        bool verify() {
+            UnusedMemorySubchunk_t *lCurrent = firstFree_;
+            while (lCurrent != nullptr) {
+                if (!this->contains(lCurrent)) return false;
+                lCurrent = lCurrent->nextFree_;
+            }
+            return true;
+        }
 
         void release(byte *aStartAddr, uint16_t aSize) {
             UnusedMemorySubchunk_t *lPreviousChunk = firstFree_;
@@ -128,6 +146,7 @@ namespace ChunkRefMemoryHandler {
         inline bool contains(UnusedMemorySubchunk_t *aAddr) {
             return this->contains((byte *) aAddr);
         }
+
 
         inline bool contains(byte *aAddr) {
             return ((begin_ <= aAddr)
@@ -242,6 +261,13 @@ namespace ChunkRefMemoryHandler {
             return chunks_.back().getMem(aSize);
         }
 
+        bool verifyPointers(){
+            for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
+                if (!lIt->verify()) return false;
+                return true;
+            }
+        }
+
         void release(byte *aStartAddr, uint16_t aSize) {
 
             // find the chunk that contains the startAddr
@@ -285,6 +311,10 @@ namespace ChunkRefMemoryHandler {
 
         void release(byte * aStartAddr, uint16_t aNumNodes, bool aLeafIndicator) {
             handler_.release(aStartAddr, aNumNodes * (aLeafIndicator) ? kSizeLeafNode : kSizeInnerNode);
+        }
+
+        bool verifyPointers(){
+            this->handler_.verifyPointers();
         }
 
         std::vector<uint32_t>* getBytesAllocatedPerChunk(){

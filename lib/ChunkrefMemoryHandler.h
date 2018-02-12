@@ -314,7 +314,7 @@ namespace ChunkRefMemoryHandler {
         }
 
         bool verifyPointers(){
-            this->handler_.verifyPointers();
+            return this->handler_.verifyPointers();
         }
 
         std::vector<uint32_t>* getBytesAllocatedPerChunk(){

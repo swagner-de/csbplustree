@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../lib/groupedCsbplustree.h"
+#include "../lib/csbplustree.cxx"
 
 
 int main() {

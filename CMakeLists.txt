@@ -10,7 +10,6 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
 
 find_package(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
-
 ADD_DEFINITIONS(-DBOOST_TEST_DYN_LINK)
 add_executable(test_ChunkrefMemoryHandler tests/ChunkrefMemoryHandler.cpp)
 target_link_libraries(test_ChunkrefMemoryHandler
@@ -19,4 +18,6 @@ target_link_libraries(test_ChunkrefMemoryHandler
         ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
         )
 
+
 add_executable(csbtree_write_read tests/csbtree_write_read.cpp)
+

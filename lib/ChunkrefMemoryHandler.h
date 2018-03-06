@@ -1,8 +1,9 @@
 #ifndef CSBPLUSTREE_CHUNKREFMEMORYHANDLER_H
 #define CSBPLUSTREE_CHUNKREFMEMORYHANDLER_H
 
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
+#include <iostream>
 #include <vector>
 #include <cstddef>
 #include <exception>
@@ -96,11 +97,18 @@ namespace ChunkRefMemoryHandler {
         }
 
         void release(byte *aStartAddr, uint16_t aSize) {
+            if (firstFree_ == nullptr) {
+                firstFree_ = new (aStartAddr) UnusedMemorySubchunk_t(aSize);
+                return;
+            }
+
+
             UnusedMemorySubchunk_t *lPreviousChunk = firstFree_;
             UnusedMemorySubchunk_t *lFollowingChunk;
             UnusedMemorySubchunk_t *lReleasedChunk = (UnusedMemorySubchunk_t*) aStartAddr;
 
             aSize = roundUp(aSize);
+
 
             // find the previous chunk
             while (lPreviousChunk->nextFree_ != nullptr &&
@@ -268,7 +276,6 @@ namespace ChunkRefMemoryHandler {
                 }
             }
             chunks_.push_back(ThisMemoryChunk_t());
-            printUsage();
             return chunks_.back().getMem(aSize);
         }
 
@@ -321,45 +328,6 @@ namespace ChunkRefMemoryHandler {
         std::vector<ThisMemoryChunk_t> chunks_;
 
 
-    };
-    
-    template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit, uint16_t kSizeInnerNode, uint16_t kSizeLeafNode>
-    class NodeMemoryManager_t{
-    public:
-        NodeMemoryManager_t(){
-            handler_ = ThisMemoryHandler_t();
-        }
-
-        byte * getMem(uint16_t aNumNodes, bool aLeafIndicator) {
-            uint16_t lSizeNode = (aLeafIndicator) ? kSizeLeafNode : kSizeInnerNode;
-            uint32_t lSizeAlloc = lSizeNode * aNumNodes;
-            return handler_.getMem(lSizeAlloc);
-        }
-
-        void release(byte * aStartAddr, uint16_t aNumNodes, bool aLeafIndicator) {
-            handler_.release(aStartAddr, aNumNodes * (aLeafIndicator) ? kSizeLeafNode : kSizeInnerNode);
-        }
-
-        bool verifyPointers(){
-            return this->handler_.verifyPointers();
-        }
-
-        std::vector<uint32_t>* getBytesAllocatedPerChunk(){
-            return handler_.getBytesAllocatedPerChunk();
-        }
-
-        void printUsage() {
-            handler_.printUsage();
-        }
-
-
-
-
-
-
-            private:
-        using ThisMemoryHandler_t = MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>;
-        ThisMemoryHandler_t handler_;
     };
 };
 #endif //CSBPLUSTREE_CHUNKREFMEMORYHANDLER_H

@@ -81,7 +81,7 @@ namespace ChunkRefMemoryHandler {
             // assert to have a size of at least one cache line to assure a UnusedMemorySubchunk will fit
             aSize = roundUp(aSize);
             byte* lAddr =(kBestFit) ? bestFit(aSize) : firstFit(aSize);
-            if (!contains(lAddr)){
+            if (!contains(lAddr) && lAddr != NULL){
                 throw MemAddrNotPartofChunk();
             } else return lAddr;
         };
@@ -141,6 +141,16 @@ namespace ChunkRefMemoryHandler {
 
 
 
+        }
+
+        uint32_t getFree(){
+            UnusedMemorySubchunk_t *lCurrent = firstFree_;
+            uint32_t lFree = 0;
+            while (lCurrent != nullptr) {
+                lFree += lCurrent->size_;
+                lCurrent = lCurrent->nextFree_;
+            }
+            return lFree;
         }
 
         inline bool contains(UnusedMemorySubchunk_t *aAddr) {
@@ -258,6 +268,7 @@ namespace ChunkRefMemoryHandler {
                 }
             }
             chunks_.push_back(ThisMemoryChunk_t());
+            printUsage();
             return chunks_.back().getMem(aSize);
         }
 
@@ -290,9 +301,25 @@ namespace ChunkRefMemoryHandler {
             return lResults;
         }
 
+
+        void printUsage(){
+            uint32_t lAllocated = this->chunks_.size() * kSizeChunk;
+            uint32_t lChunks = this->chunks_.size();
+            uint32_t lFree = 0;
+            for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
+                lFree= lIt->getFree();
+            }
+
+            std::cout << " --- Memory Usage --- "<< std::endl;
+            std::cout << " Chunks allocated: " << lChunks << std::endl;
+            std::cout << " Memory allocated: " << lAllocated/1024 << std::endl;
+            std::cout << " Free            : " << lFree/1024 << std::endl;
+        }
+
     private:
         using ThisMemoryChunk_t = MemoryChunk_t< kSizeChunk, kSizeCacheLine, kBestFit>;
         std::vector<ThisMemoryChunk_t> chunks_;
+
 
     };
     
@@ -321,12 +348,16 @@ namespace ChunkRefMemoryHandler {
             return handler_.getBytesAllocatedPerChunk();
         }
 
+        void printUsage() {
+            handler_.printUsage();
+        }
 
 
 
 
 
-    private:
+
+            private:
         using ThisMemoryHandler_t = MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>;
         ThisMemoryHandler_t handler_;
     };

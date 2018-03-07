@@ -1,8 +1,17 @@
 #ifndef CSBPLUSTREE_CSBPLUSTREE_H
 #define CSBPLUSTREE_CSBPLUSTREE_H
 
+#include "ChunkrefMemoryHandler.h"
+#include <cstddef>
+#include <stack>
+
+
+typedef typename std::byte byte;
+
 
 template <class Key_t, class Tid_t, uint16_t kNumCacheLinesPerNode>
+
+
 
 class CsbTree_t{
 private:
@@ -18,15 +27,13 @@ private:
     static constexpr uint16_t       kNumMaxKeysLeafNode = (kSizeNode - kSizeFixedLeafNode) / (sizeof(Key_t) + sizeof(Tid_t));
     static constexpr uint16_t       kSizePaddingLeafNode = kSizeNode - (kNumMaxKeysLeafNode * (sizeof(Tid_t) + sizeof(Key_t)) + kSizeFixedLeafNode);
 
-    static constexpr uint16_t       kSizeFixedLeafEdgeNode = 10;
+    static constexpr uint16_t       kSizeFixedLeafEdgeNode = 18;
     static constexpr uint16_t       kNumMaxKeysLeafEdgeNode = (kSizeNode - kSizeFixedLeafEdgeNode) / (sizeof(Key_t) + sizeof(Tid_t));
     static constexpr uint16_t       kSizePaddingLeafEdgeNode = kSizeNode - (kNumMaxKeysLeafEdgeNode * (sizeof(Tid_t) + sizeof(Key_t)) + kSizeFixedLeafEdgeNode);
 
+    static constexpr uint32_t       kSizeMemoryChunk = kSizeNode * kNumMaxKeysInnerNode * 10000;
 
-    static constexpr uint32_t       kSizeMemoryChunk = kSizeNode * kNumMaxKeysInnerNode * 100;
-
-    typedef typename ChunkRefMemoryHandler::NodeMemoryManager_t<kSizeMemoryChunk, kSizeCacheLine, 1, kSizeNode, kSizeNode> TreeMemoryManager_t;
-    typedef typename std::byte byte;
+    typedef typename ChunkRefMemoryHandler::MemoryHandler_t<kSizeMemoryChunk, kSizeCacheLine, 1> TreeMemoryManager_t;
 
     byte* root_;
     TreeMemoryManager_t* tmm_;
@@ -45,26 +52,21 @@ public:
         uint8_t     free_       [kSizePaddingInnerNode];  // padding
 
         CsbInnerNode_t();
+        inline Key_t getLargestKey();
         void shift(uint16_t aIdx);
         void allocateChildNodes(TreeMemoryManager_t* aTmm);
         void moveKeysAndChildren(CsbInnerNode_t* aNodeTarget, uint16_t aNumKeysRemaining);
         void remove(uint16_t aIdxToRemove);
         inline uint16_t getChildNodeIdx(byte* aChildNode);
-        inline uint16_t getChildMaxKeys(uint32_t aChildDepth, byte* aChild);
-        inline uint16_t getChildNumKeys(uint32_t aChildDepth, byte* aChild);
-        inline bool childIsEdge(byte* aChildNode, uint32_t aDepth);
-        inline bool childIsFull(byte* aChildNode);
-        std::string asJson();
+        inline uint16_t getChildMaxKeys(uint32_t aChildDepth, uint32_t aTreeDepth, byte* aChild);
+        inline uint16_t getChildNumKeys(uint32_t aChildDepth, uint32_t aTreeDepth, byte* aChild);
+        inline uint16_t getChildNumKeys(bool aIsLeaf, byte* aChild);
+        inline bool childIsEdge(byte* aChildNode);
+        inline bool childIsFull(uint32_t aChildDepth, uint32_t aTreeDepth, byte* aChildNode);
+        std::string asJson(uint16_t aDepth);
 
     } __attribute__((packed));
 
-    class CsbLeafNodeGroup_t {
-    public:
-        CsbLeafNode_t           nodes_      [kNumMaxKeysInnerNode];
-        CsbLeafNodeGroup_t*     previous_;
-        CsbLeafNodeGroup_t      follwing_;
-        byte                    padding_    [kSizeCacheLine - 16];
-    };
 
 
     class CsbLeafNode_t {
@@ -75,23 +77,26 @@ public:
         uint8_t         free_       [kSizePaddingLeafNode];   // padding
 
         CsbLeafNode_t();
+        inline Key_t getLargestKey();
         void insert(Key_t aKey, Tid_t aTid);
         void moveKeysAndTids(CsbLeafNode_t* aNodeTarget, uint16_t aNumKeysRemaining);
         void remove(Key_t key, Tid_t tid);
+        void toLeafEdge();
         std::string asJson();
 
     } __attribute__((packed));
 
     class CsbLeafEdgeNode_t {
     public:
-        Key_t           keys_       [kNumMaxKeysLeafEdgeNode];
-        Tid_t           tids_       [kNumMaxKeysLeafEdgeNode];
-        uint16_t        numKeys_;
-        CsbLeafNode_t*  adjacent_;
-        uint8_t         free_       [kSizePaddingLeafEdgeNode];   // padding
+        Key_t               keys_       [kNumMaxKeysLeafEdgeNode];
+        Tid_t               tids_       [kNumMaxKeysLeafEdgeNode];
+        uint16_t            numKeys_;
+        CsbLeafEdgeNode_t*  previous_;
+        CsbLeafEdgeNode_t*  following_;
+        uint8_t             free_       [kSizePaddingLeafEdgeNode];   // padding
 
         CsbLeafEdgeNode_t();
-
+        inline Key_t getLargestKey();
         void insert(Key_t aKey, Tid_t aTid);
         void moveKeysAndTids(CsbLeafNode_t* aNodeTarget, uint16_t aNumKeysRemaining);
         void moveKeysAndTids(CsbLeafEdgeNode_t* aNodeTarget, uint16_t aNumKeysRemaining);
@@ -105,28 +110,42 @@ public:
     struct SplitResult_tt{
         byte*       _left;
         uint16_t    _splitIdx;
-        bool        _edgeIndicator[2];
+        bool        _edgeIndicator;
+    };
+
+    struct SearchResult_tt {
+        byte*       _node;
+        uint16_t    _idx;
     };
 
 
+    class TooManyKeysException : public std::exception {
+        virtual const char *what() const throw() {
+            return "The node has to many keys to perform the operation";
+        }
+    };
 
-    byte* findLeafNode(Key_t aKey, std::stack<CsbInnerNode_t*>* aPath= nullptr);
-    Tid_t find(Key_t aKey);
+    void findLeafNode(Key_t aKey, SearchResult_tt* aResult, bool aAbortEarly, std::stack<CsbInnerNode_t*>* aPath= nullptr);
+    void findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_t*>* aPath)
+    int32_t find(Key_t aKey, Tid_t* aResult);
 
     void insert(Key_t aKey, Tid_t aTid);
     void remove(Key_t aKey, Tid_t aTid);
-    void split(byte* aNodeToSplit, uint32_t aDepth, std::stack<TreePath_tt>* aPath, SplitResult_tt* aResult);
+    void split(byte* aNodeToSplit, uint32_t aDepth, std::stack<CsbInnerNode_t*>* aPath, SplitResult_tt* aResult);
     std::string getTreeAsJson();
     void saveTreeAsJson(std::string aPath);
+    void getMemoryUsage();
 
 
     inline bool isLeaf(uint32_t aDepth);
-    static inline uint16_t getNumKeys(byte* aNode);
-    static inline std::string kThChildrenAsJson(uint32_t aK, byte* aFirstChild);
+    std::string kThChildrenAsJson(uint32_t aK, byte* aFirstChild, uint32_t aNodeDepth, uint32_t aTreeDepth);
+    static Key_t getLargestKey(byte* aNode, bool aChild, bool aEdge);
     static byte* getKthNode(uint16_t aK, byte* aNodeFirstChild);
     static uint16_t idxToDescend(Key_t aKey, Key_t aKeys[], uint16_t aNumKeys);
+    static uint16_t idxToInsert(Key_t aKey, Key_t aKeys[], uint16_t aNumKeys);
 
 };
 
+#include "csbplustree.h"
 
 #endif //CSBPLUSTREE_CSBPLUSTREE_H

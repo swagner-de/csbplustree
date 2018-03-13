@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
+#include <cstring>
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -170,7 +171,17 @@ shift(uint16_t aIdx) {
     );
 
     this->numKeys_ += 1;
+    this->setStopMarker();
 }
+
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+void
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+CsbInnerNode_t::
+setStopMarker() {
+    ((CsbInnerNode_t*) getKthNode(this->numKeys_, this->children_))->numKeys_ = NULL;
+}
+
 
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
@@ -277,7 +288,9 @@ moveKeysAndChildren(CsbInnerNode_t* aNodeTarget, uint16_t aNumKeysRemaining) {
 
     aNodeTarget->numKeys_ = this->numKeys_ - aNumKeysRemaining;
     this->numKeys_ = aNumKeysRemaining;
+    this->setStopMarker();
 }
+
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
@@ -310,31 +323,14 @@ moveKeysAndTids(CsbLeafNode_t* aNodeTarget, uint16_t aNumKeysRemaining){
             &this->keys_[aNumKeysRemaining],
             sizeof(Key_t) * (this->numKeys_ - aNumKeysRemaining)
     ); // keys_
+
+
     memmove(
             aNodeTarget->tids_,
             &this->tids_[aNumKeysRemaining],
             sizeof(Tid_t) * (this->numKeys_ - aNumKeysRemaining)
     ); // tids_
 
-    aNodeTarget->numKeys_ = this->numKeys_ - aNumKeysRemaining;
-    this->numKeys_ = aNumKeysRemaining;
-}
-
-template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
-void
-CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-CsbLeafEdgeNode_t::
-moveKeysAndTids(CsbLeafEdgeNode_t* aNodeTarget, uint16_t aNumKeysRemaining){
-    memmove(
-            aNodeTarget->keys_,
-            &this->keys_[aNumKeysRemaining],
-            sizeof(Key_t) * (this->numKeys_ - aNumKeysRemaining)
-    ); // keys_
-    memmove(
-            aNodeTarget->tids_,
-            &this->tids_[aNumKeysRemaining],
-            sizeof(Tid_t) * (this->numKeys_ - aNumKeysRemaining)
-    ); // tids_
 
     aNodeTarget->numKeys_ = this->numKeys_ - aNumKeysRemaining;
     this->numKeys_ = aNumKeysRemaining;
@@ -370,6 +366,7 @@ split(byte* aNodeToSplit, uint32_t aDepth,  std::stack<CsbInnerNode_t*>* aPath, 
     uint16_t        lNumKeysLeftSplit;
     uint16_t        lIdxNodeToSplit;
     const bool      lIsLeaf = isLeaf(aDepth);
+    const bool      lIsLastInnerLevel = isLeaf(aDepth + 1);
 
 
     if (this->root_ == aNodeToSplit) {
@@ -482,6 +479,7 @@ split(byte* aNodeToSplit, uint32_t aDepth,  std::stack<CsbInnerNode_t*>* aPath, 
              */
             aResult->_edgeIndicator = true;
             new(lNodeSplittedRight) CsbLeafNode_t();
+            lNumKeysLeftSplit = ((CsbLeafEdgeNode_t *) aNodeToSplit)->numKeys_ / 2;
             ((CsbLeafEdgeNode_t *) aNodeToSplit)->moveKeysAndTids((CsbLeafNode_t*) lNodeSplittedRight, lNumKeysLeftSplit);
             lNodeParent->keys_[lIdxNodeToSplit] = ((CsbLeafEdgeNode_t *) aNodeToSplit)->getLargestKey();
         } else {
@@ -547,7 +545,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 std::string
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-asJson(uint16_t aDepth) {
+asJson(uint32_t aDepth, uint32_t aTreeDepth) {
     /*
      * "text": {"name": "Parent node"},
      *  "children": [....]
@@ -562,7 +560,7 @@ asJson(uint16_t aDepth) {
             lStringKeys.append(",");
         }
         lStringKeys.append(std::to_string(keys_[i]));
-        //lStringChildren.append(kThChildrenAsJson(i, children_));
+        lStringChildren.append(kThChildrenAsJson(i, children_, aDepth + 1, aTreeDepth));
         if (i + 1 < numKeys_) {
             lStringChildren.append(",");
         }
@@ -584,7 +582,22 @@ asJson() {
      *
      */
     std::string lJsonObj = "{\"text\":{\"name\":\"";
-    lJsonObj.append("keys: " + std::to_string(keys_[0]) + " - " + std::to_string(keys_[numKeys_ - 1]));
+    lJsonObj.append("keys: " + std::to_string(keys_[0]) + " - " + std::to_string(keys_[numKeys_ - 1]) + "; #" + std::to_string(this->numKeys_));
+    return lJsonObj.append("\"}}");
+}
+
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+std::string
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+CsbLeafEdgeNode_t::
+asJson() {
+    /*
+     * "text": {"name": "Parent node"},
+     *  "children": [....]
+     *
+     */
+    std::string lJsonObj = "{\"text\":{\"name\":\"";
+    lJsonObj.append("keys: " + std::to_string(keys_[0]) + " - " + std::to_string(keys_[numKeys_ - 1]) + "; #" + std::to_string(this->numKeys_));
     return lJsonObj.append("\"}}");
 }
 
@@ -593,20 +606,22 @@ std::string
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 getTreeAsJson() {
     if (this->depth_ == 0) {
-        return "{\"nodeStructure\":" + ((CsbLeafNode_t *) root_)->asJson() + "}";
+        return "{\"nodeStructure\":" + ((CsbLeafEdgeNode_t *) root_)->asJson() + "}";
     }
-    return "{\"nodeStructure\":" + ((CsbInnerNode_t *) root_)->asJson(this->depth_) + "}";
+    return "{\"nodeStructure\":" + ((CsbInnerNode_t*) this->root_)->asJson(0, this->depth_) + "}";
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 std::string
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-kThChildrenAsJson(uint32_t aK, byte *aFirstChild, uint32_t aTreeDepth, uint32_t aNodeDepth) {
+kThChildrenAsJson(uint32_t aK, byte *aFirstChild, uint32_t aNodeDepth, uint32_t aTreeDepth) {
     if (aTreeDepth == aNodeDepth) {
+        if (aK == 0){
+            return ((CsbLeafEdgeNode_t*) getKthNode(aK, aFirstChild))->asJson();
+        }
         return ((CsbLeafNode_t *) getKthNode(aK, aFirstChild))->asJson();
-    } else {
-        return ((CsbInnerNode_t*) getKthNode(aK, aFirstChild))->asJson();
     }
+    return ((CsbInnerNode_t*) getKthNode(aK, aFirstChild))->asJson(aNodeDepth, aTreeDepth);
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
@@ -782,4 +797,41 @@ idxToInsert(Key_t aKey, Key_t aKeys[], uint16_t aNumKeys) {
         }
     }
     return aNumKeys;
+}
+
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+uint64_t
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+getNumKeys() {
+    if (isLeaf(0)){
+        return ((CsbLeafEdgeNode_t*) this->root_)->numKeys_;
+    }
+
+    CsbInnerNode_t*     lNodeCurrent        = (CsbInnerNode_t *) this->root_;
+    CsbLeafEdgeNode_t*  lLeafEdgeCurrent;
+    CsbLeafNode_t*      lLeafCurrent;
+    CsbLeafEdgeNode_t*  lLeafEdgeFollowing;
+    uint64_t            lNumKeysTotal       = 0;
+
+    for (uint64_t iDepth = 0; iDepth < this->depth_; iDepth++){
+        lNodeCurrent = (CsbInnerNode_t*) lNodeCurrent->children_;
+    }
+
+    lLeafEdgeCurrent = (CsbLeafEdgeNode_t*) lNodeCurrent;
+
+    do {
+        lLeafEdgeFollowing = lLeafEdgeCurrent->following_;
+        lNumKeysTotal += lLeafEdgeCurrent->numKeys_;
+        for (uint16_t n = 1; n < kNumMaxKeysInnerNode; n++){
+            uint16_t lNumKeysCurrent = ((CsbLeafNode_t*) (lLeafEdgeCurrent + n))->numKeys_;
+            if (lNumKeysCurrent == NULL) {
+                break;
+            }
+            else {
+                lNumKeysTotal += lNumKeysCurrent;
+            }
+        }
+        lLeafEdgeCurrent = lLeafEdgeFollowing;
+    } while (lLeafEdgeCurrent != nullptr);
+    return lNumKeysTotal;
 }

@@ -56,6 +56,7 @@ public:
         void shift(uint16_t aIdx);
         void allocateChildNodes(TreeMemoryManager_t* aTmm);
         void moveKeysAndChildren(CsbInnerNode_t* aNodeTarget, uint16_t aNumKeysRemaining);
+        inline void setStopMarker();
         void remove(uint16_t aIdxToRemove);
         inline uint16_t getChildNodeIdx(byte* aChildNode);
         inline uint16_t getChildMaxKeys(uint32_t aChildDepth, uint32_t aTreeDepth, byte* aChild);
@@ -63,7 +64,7 @@ public:
         inline uint16_t getChildNumKeys(bool aIsLeaf, byte* aChild);
         inline bool childIsEdge(byte* aChildNode);
         inline bool childIsFull(uint32_t aChildDepth, uint32_t aTreeDepth, byte* aChildNode);
-        std::string asJson(uint16_t aDepth);
+        std::string asJson(uint32_t aNodeDepth, uint32_t aTreeDepth);
 
     } __attribute__((packed));
 
@@ -99,8 +100,6 @@ public:
         inline Key_t getLargestKey();
         void insert(Key_t aKey, Tid_t aTid);
         void moveKeysAndTids(CsbLeafNode_t* aNodeTarget, uint16_t aNumKeysRemaining);
-        void moveKeysAndTids(CsbLeafEdgeNode_t* aNodeTarget, uint16_t aNumKeysRemaining);
-        void convertToLeafNode();
         void remove(Key_t key, Tid_t tid);
         std::string asJson();
 
@@ -128,17 +127,16 @@ public:
     void findLeafNode(Key_t aKey, SearchResult_tt* aResult);
     void findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_t*>* aPath);
     int32_t find(Key_t aKey, Tid_t* aResult);
-
     void insert(Key_t aKey, Tid_t aTid);
     void remove(Key_t aKey, Tid_t aTid);
     void split(byte* aNodeToSplit, uint32_t aDepth, std::stack<CsbInnerNode_t*>* aPath, SplitResult_tt* aResult);
-    std::string getTreeAsJson();
     void saveTreeAsJson(std::string aPath);
     void getMemoryUsage();
-
-
     inline bool isLeaf(uint32_t aDepth);
-    std::string kThChildrenAsJson(uint32_t aK, byte* aFirstChild, uint32_t aNodeDepth, uint32_t aTreeDepth);
+    std::string getTreeAsJson();
+    uint64_t getNumKeys();
+
+    static std::string kThChildrenAsJson(uint32_t aK, byte* aFirstChild, uint32_t aNodeDepth, uint32_t aTreeDepth);
     static Key_t getLargestKey(byte* aNode, bool aChild, bool aEdge);
     static byte* getKthNode(uint16_t aK, byte* aNodeFirstChild);
     static uint16_t idxToDescend(Key_t aKey, Key_t aKeys[], uint16_t aNumKeys);

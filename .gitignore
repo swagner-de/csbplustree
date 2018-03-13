@@ -86,3 +86,6 @@ CMakeFiles*/
 CMakeCache.txt
 visual/trees/*
 cmake-build*/
+
+.directory
+*.patch

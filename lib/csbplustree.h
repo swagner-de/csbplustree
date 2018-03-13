@@ -125,7 +125,7 @@ public:
         }
     };
 
-    void findLeafNode(Key_t aKey, SearchResult_tt* aResult, bool aAbortEarly, std::stack<CsbInnerNode_t*>* aPath= nullptr);
+    void findLeafNode(Key_t aKey, SearchResult_tt* aResult);
     void findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_t*>* aPath);
     int32_t find(Key_t aKey, Tid_t* aResult);
 

@@ -20,7 +20,7 @@ inline void checkResult(Tree_t* aTree, uint32_t aKey, uint64_t aTid){
 
 int main() {
     std::string basePath = "/home/sebas/dev/Uni/master_thesis/csbplustree/visual/trees/";
-    uint32_t maxKeys = 5000;
+    uint32_t maxKeys = 10000;
 
 
     Tree_t tree1 =  Tree_t();
@@ -41,17 +41,12 @@ int main() {
 
 
     for (uint32_t i = 0; i != maxKeys ; i++){
-        if (i == 37){
-            std::cout << "Lets see" << std::endl;
-        }
         tree2.insert(i, mapKey(i));
 
         for (uint64_t j = 0; j <= i; j++){
             checkResult(&tree2, j, mapKey(j));
         }
     }
-
-
 
     return 0;
 }

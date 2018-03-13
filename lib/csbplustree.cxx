@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
 #include <memory.h>
 #include <fstream>
 #include <string>
@@ -229,7 +228,7 @@ insert(Key_t aKey, Tid_t aTid) {
     bool                                lIsFull;
 
 
-    findLeafNode(aKey, &lSearchResult, false, &lPath);
+    findLeafForInsert(aKey, &lSearchResult, &lPath);
     lPtrNodeLeaf    = lSearchResult._node;
     lIsLeafEdge     = lSearchResult._idx == 0;
     lIsFull         = (lIsLeafEdge && ((CsbLeafEdgeNode_t*) lSearchResult._node)->numKeys_ == kNumMaxKeysLeafEdgeNode) ||
@@ -389,7 +388,7 @@ split(byte* aNodeToSplit, uint32_t aDepth,  std::stack<CsbInnerNode_t*>* aPath, 
 
     lIdxNodeToSplit = lNodeParent->getChildNodeIdx(aNodeToSplit);
     lNumKeysNodeToSplit = lNodeParent->getChildNumKeys(lIsLeaf, aNodeToSplit);
-    lNumKeysLeftSplit = ceil(lNumKeysNodeToSplit / 2.0);
+    lNumKeysLeftSplit = (lNumKeysNodeToSplit + 1 )/ 2;
 
     // case if parent node is full
     if (lNodeParent->numKeys_ == kNumMaxKeysInnerNode) {
@@ -606,7 +605,7 @@ kThChildrenAsJson(uint32_t aK, byte *aFirstChild, uint32_t aTreeDepth, uint32_t 
     if (aTreeDepth == aNodeDepth) {
         return ((CsbLeafNode_t *) getKthNode(aK, aFirstChild))->asJson();
     } else {
-        return ((CsbInnerNode_t *) getKthNode(aK, aFirstChild))->asJson();
+        return ((CsbInnerNode_t*) getKthNode(aK, aFirstChild))->asJson();
     }
 }
 
@@ -627,7 +626,7 @@ getMemoryUsage() {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-findLeafNode(Key_t aKey, SearchResult_tt* aResult, bool aAbortEarly, std::stack<CsbInnerNode_t*>* aPath) {
+findLeafNode(Key_t aKey, SearchResult_tt* aResult) {
 
     if (this->depth_ == 0) {
         aResult->_idx = 0;
@@ -642,17 +641,10 @@ findLeafNode(Key_t aKey, SearchResult_tt* aResult, bool aAbortEarly, std::stack<
 
     while (lLevel < this->depth_) {
 
-        if (aPath != nullptr) {
-            aPath->push(lNodeCurrent);
-        }
         lIdxToDescend= idxToDescend(aKey, lNodeCurrent->keys_, lNodeCurrent->numKeys_);
         if (lIdxToDescend == UINT16_MAX) {
-            if (aAbortEarly){
-                aResult->_node == nullptr;
-                return;
-            } else {
-                lIdxToDescend = lNodeCurrent->numKeys_ - 1;
-            }
+            aResult->_node == nullptr;
+            return;
         }
         lNodeCurrent = (CsbInnerNode_t *) getKthNode(lIdxToDescend, lNodeCurrent->children_);
         lLevel++;
@@ -670,18 +662,18 @@ CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_t*>* aPath) {
 
 
-    aResult->_idx = 0;
-
     uint16_t            lIdxToDescend;
     uint32_t            lLevel       = 0;
-    CsbInnerNode_t*     lNodeCurrent = (CsbInnerNode_t*) aResult->_node;
+    CsbInnerNode_t*     lNodeCurrent = (CsbInnerNode_t*) this->root_;
 
     while (lLevel < this->depth_) {
         aPath->push(lNodeCurrent);
         lIdxToDescend= idxToDescend(aKey, lNodeCurrent->keys_, lNodeCurrent->numKeys_);
-        if (lIdxToDescend == (uint16_t) -1){
+        if (lIdxToDescend == UINT16_MAX) {
             lIdxToDescend = lNodeCurrent->numKeys_ - 1;
+            lNodeCurrent->keys_[lIdxToDescend] = aKey;
         }
+
         lNodeCurrent = (CsbInnerNode_t *) getKthNode(lIdxToDescend, lNodeCurrent->children_);
         lLevel++;
     }
@@ -689,9 +681,7 @@ findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_
     aResult->_node = (byte*) lNodeCurrent;
     aResult->_idx = lIdxToDescend;
 
-
-
-    };
+};
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 int32_t
@@ -705,7 +695,7 @@ find(Key_t aKey, Tid_t* aResult) {
 
 
 
-    this->findLeafNode(aKey, &lSearchResult, true);
+    this->findLeafNode(aKey, &lSearchResult);
     if (lSearchResult._node == nullptr) {
         return -1;
     }
@@ -721,7 +711,7 @@ find(Key_t aKey, Tid_t* aResult) {
 
 
     lIdxTid = idxToDescend(aKey, lKeys, lNumKeys);
-    if (lIdxTid == (uint16_t) -1){
+    if (lIdxTid == UINT16_MAX){
         return -1;
     }
 
@@ -773,7 +763,7 @@ uint16_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 idxToDescend(Key_t aKey, Key_t aKeys[], uint16_t aNumKeys) {
     if (aNumKeys == 0) return 0;
-    for (uint16_t i = 0; i <= aNumKeys; i++) {
+    for (uint16_t i = 0; i < aNumKeys; i++) {
         if (aKeys[i] >= aKey) {
             return i;
         }

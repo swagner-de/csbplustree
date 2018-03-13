@@ -7,7 +7,6 @@
 #include <string>
 #include <iostream>
 
-#include "csbplustree.h"
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
@@ -684,6 +683,7 @@ findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_
             lIdxToDescend = lNodeCurrent->numKeys_ - 1;
         }
         lNodeCurrent = (CsbInnerNode_t *) getKthNode(lIdxToDescend, lNodeCurrent->children_);
+        lLevel++;
     }
 
     aResult->_node = (byte*) lNodeCurrent;

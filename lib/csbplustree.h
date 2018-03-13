@@ -126,7 +126,7 @@ public:
     };
 
     void findLeafNode(Key_t aKey, SearchResult_tt* aResult, bool aAbortEarly, std::stack<CsbInnerNode_t*>* aPath= nullptr);
-    void findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_t*>* aPath)
+    void findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_t*>* aPath);
     int32_t find(Key_t aKey, Tid_t* aResult);
 
     void insert(Key_t aKey, Tid_t aTid);
@@ -146,6 +146,6 @@ public:
 
 };
 
-#include "csbplustree.h"
+#include "csbplustree.cxx"
 
 #endif //CSBPLUSTREE_CSBPLUSTREE_H

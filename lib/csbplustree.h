@@ -69,7 +69,6 @@ public:
     } __attribute__((packed));
 
 
-
     class CsbLeafNode_t {
     public:
         Key_t           keys_       [kNumMaxKeysLeafNode];
@@ -81,6 +80,7 @@ public:
         inline Key_t getLargestKey();
         void insert(Key_t aKey, Tid_t aTid);
         void moveKeysAndTids(CsbLeafNode_t* aNodeTarget, uint16_t aNumKeysRemaining);
+        void leftInsertKeysAndTids(CsbLeafNode_t* aNodeSource, uint16_t aNumKeys);
         void remove(Key_t key, Tid_t tid);
         void toLeafEdge();
         std::string asJson();
@@ -135,6 +135,8 @@ public:
     inline bool isLeaf(uint32_t aDepth);
     std::string getTreeAsJson();
     uint64_t getNumKeys();
+    uint64_t getNumKeysBackwards();
+    bool verifyOrder();
 
     static std::string kThChildrenAsJson(uint32_t aK, byte* aFirstChild, uint32_t aNodeDepth, uint32_t aTreeDepth);
     static Key_t getLargestKey(byte* aNode, bool aChild, bool aEdge);

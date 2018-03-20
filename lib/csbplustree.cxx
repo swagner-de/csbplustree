@@ -19,6 +19,8 @@ CsbTree_t() {
     static_assert(kSizeNode == sizeof(CsbLeafNode_t));
     static_assert(kSizeNode == sizeof(CsbLeafEdgeNode_t));
     static_assert(kNumMaxKeysLeafEdgeNode > 0);
+    static_assert(kNumMaxKeysLeafNode >= (kNumMaxKeysLeafEdgeNode / 2));
+    // TODO assert that a InnerNode has space for 2 more nodes after a split
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
@@ -147,31 +149,32 @@ shift(uint16_t aIdx) {
     if (this->numKeys_ + 1 > kNumMaxKeysInnerNode) {
         throw TooManyKeysException();
     }
+    if (aIdx <= this->numKeys_) {
 
 
-    /*
-     *   0   1   2   3
-     * [ x | x | x |   ]
-     * [   | x | x | x ]
-     *   args: idx = 0
-     */
 
-    // shift keys_
-    memmove(
-            &this->keys_[aIdx + 1],
-            &this->keys_[aIdx],
-            sizeof(Key_t) * (this->numKeys_ - aIdx)
-    );
+        /*
+         *   0   1   2   3
+         * [ x | x | x |   ]
+         * [   | x | x | x ]
+         *   args: idx = 0
+         */
 
-    // shift the child nodes
-    memmove(
-            getKthNode(aIdx + 1, this->children_),
-            getKthNode(aIdx, this->children_),
-            kSizeNode * (this->numKeys_ - aIdx)
-    );
+        // shift keys_
+        memmove(
+                &this->keys_[aIdx + 1],
+                &this->keys_[aIdx],
+                sizeof(Key_t) * (this->numKeys_ - aIdx)
+        );
 
+        // shift the child nodes
+        memmove(
+                getKthNode(aIdx + 1, this->children_),
+                getKthNode(aIdx, this->children_),
+                kSizeNode * (this->numKeys_ - aIdx)
+        );
+    }
     this->numKeys_ += 1;
-    this->setStopMarker();
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
@@ -179,7 +182,7 @@ void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
 setStopMarker() {
-    ((CsbInnerNode_t*) getKthNode(this->numKeys_, this->children_))->numKeys_ = NULL;
+    ((CsbLeafNode_t*) getKthNode(this->numKeys_, this->children_))->numKeys_ = NULL;
 }
 
 
@@ -288,7 +291,6 @@ moveKeysAndChildren(CsbInnerNode_t* aNodeTarget, uint16_t aNumKeysRemaining) {
 
     aNodeTarget->numKeys_ = this->numKeys_ - aNumKeysRemaining;
     this->numKeys_ = aNumKeysRemaining;
-    this->setStopMarker();
 }
 
 
@@ -311,6 +313,53 @@ moveKeysAndTids(CsbLeafNode_t* aNodeTarget, uint16_t aNumKeysRemaining){
     aNodeTarget->numKeys_ = this->numKeys_ - aNumKeysRemaining;
     this->numKeys_ = aNumKeysRemaining;
 }
+
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+void
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+CsbLeafNode_t::
+leftInsertKeysAndTids(CsbLeafNode_t *aNodeSource, uint16_t aNumKeys) {
+
+    /*
+     * _ move existing keys
+     * _ copy keys then tids from source node
+     * _ set numKeys at source and this
+     */
+
+    if (this->numKeys_ + aNumKeys > kNumMaxKeysLeafNode)
+        throw TooManyKeysException();
+
+    // move existing keys and tids
+    memmove(
+            &this->keys_[aNumKeys],
+            this->keys_,
+            this->numKeys_ * sizeof(Key_t)
+    ); // keys_
+
+    memmove(
+            &this->tids_[aNumKeys],
+            this->tids_,
+            this->numKeys_ * sizeof(Tid_t)
+    ); // tids_
+
+    this->numKeys_ += aNumKeys;
+
+    // copy the keys and tids from the source node to this node
+    memmove(
+            this->keys_,
+            &aNodeSource->keys_[aNodeSource->numKeys_ - aNumKeys],
+            aNumKeys * sizeof(Key_t)
+    );
+    memmove(
+            this->tids_,
+            &aNodeSource->tids_[aNodeSource->numKeys_ - aNumKeys],
+            aNumKeys * sizeof(Tid_t)
+    );
+
+    aNodeSource->numKeys_ -= aNumKeys;
+}
+
+
 
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
@@ -366,7 +415,6 @@ split(byte* aNodeToSplit, uint32_t aDepth,  std::stack<CsbInnerNode_t*>* aPath, 
     uint16_t        lNumKeysLeftSplit;
     uint16_t        lIdxNodeToSplit;
     const bool      lIsLeaf = isLeaf(aDepth);
-    const bool      lIsLastInnerLevel = isLeaf(aDepth + 1);
 
 
     if (this->root_ == aNodeToSplit) {
@@ -419,27 +467,50 @@ split(byte* aNodeToSplit, uint32_t aDepth,  std::stack<CsbInnerNode_t*>* aPath, 
             CsbInnerNode_t* lNodeParentRight    = ((CsbInnerNode_t*) lParentSplit._left) + 1;
             CsbLeafNode_t*  lNodeRightGroup0    = (CsbLeafNode_t*) getKthNode(0, lNodeParentRight->children_);
             CsbLeafNode_t*  lNodeRightGroup1    = (CsbLeafNode_t*) getKthNode(1, lNodeParentRight->children_);
+            CsbLeafEdgeNode_t *lLeafEdgePrevious, *lLeafEdgeMiddle, *lLeafEdgeFollowing;
 
             if (lNodeRightGroup0->numKeys_ > kNumMaxKeysLeafEdgeNode) {
-                uint16_t lNumKeysToMove = kNumMaxKeysLeafEdgeNode - lNodeRightGroup0->numKeys_;
-                if (lNumKeysToMove + lNodeRightGroup1->numKeys_ > kNumMaxKeysLeafNode) {
-                    // next node cannot catch all the keys
+                // basically we do a simplified split on the node. We can assume to have space in the parent as it has just been splitted
 
-                    lNodeParentRight->shift(1);
-                    // [ o | o | o |  |  |  ] -> [ o |   | o | o |  |  ]
-                }
-                lNodeRightGroup0->moveKeysAndTids(lNodeRightGroup1, lNodeRightGroup0->numKeys_ - lNumKeysToMove);
-                lNodeParentRight->keys_[1] = lNodeRightGroup1->getLargestKey();
+                lNodeParentRight->shift(1);
+                // [ o | o | o |  |  |  ] -> [ o |   | o | o |  |  ]
+                new(lNodeRightGroup1) CsbLeafNode_t;
+                lNodeParentRight->keys_[1] = lNodeParentRight->keys_[0];
+                lNodeRightGroup0->moveKeysAndTids(lNodeRightGroup1, (kNumMaxKeysLeafEdgeNode + 1) / 2);
                 lNodeParentRight->keys_[0] = lNodeRightGroup0->getLargestKey();
+
+                if (lIdxNodeToSplit > lParentSplit._splitIdx) {
+                    lIdxNodeToSplit += 1;
+                }
             }
             // now enough keys from the edge have been moved to safely convert the node to an edge
             lNodeRightGroup0->toLeafEdge();
-            ((CsbLeafEdgeNode_t*) lNodeRightGroup0)->previous_ = (CsbLeafEdgeNode_t*) (lNodeParentRight - 1)->children_;
-            (((CsbLeafEdgeNode_t*) getKthNode(0, (lNodeParentRight - 1)->children_)))->following_ = (CsbLeafEdgeNode_t*) lNodeRightGroup0;
+
+            // now we have to adjust the pointers
+            lLeafEdgeMiddle     = (CsbLeafEdgeNode_t*) lNodeRightGroup0;
+            lLeafEdgePrevious   = (CsbLeafEdgeNode_t*) (lNodeParentRight - 1)->children_;
+            lLeafEdgeFollowing  = lLeafEdgePrevious->following_;
+
+            lLeafEdgePrevious   ->following_    = lLeafEdgeMiddle;
+            lLeafEdgeMiddle     ->previous_     = lLeafEdgePrevious;
+            lLeafEdgeMiddle     ->following_    = lLeafEdgeFollowing;
+            if (lLeafEdgeFollowing != nullptr){
+                lLeafEdgeFollowing  ->previous_     = lLeafEdgeMiddle;
+            }
+
+
+            ((CsbInnerNode_t*) lParentSplit._left)->setStopMarker();
+            lNodeParentRight->setStopMarker();
+            if (lIdxNodeToSplit == lParentSplit._splitIdx ){
+                aResult->_left = (byte*) lNodeRightGroup0;
+                aResult->_splitIdx = 0;
+                aResult->_edgeIndicator = true;
+                return;
+            }
         }
 
         // select the matching parent and reassign the pointer to the node as due to the split the location has changed
-        if (lIdxNodeToSplit <= lParentSplit._splitIdx) {
+        if (lIdxNodeToSplit < lParentSplit._splitIdx) {
             lNodeParent = (CsbInnerNode_t*) lParentSplit._left;
 
         } else {
@@ -447,8 +518,6 @@ split(byte* aNodeToSplit, uint32_t aDepth,  std::stack<CsbInnerNode_t*>* aPath, 
             lIdxNodeToSplit = lIdxNodeToSplit - lParentSplit._splitIdx;
         }
         aNodeToSplit = getKthNode(lIdxNodeToSplit, lNodeParent->children_);
-
-
     }
 
 
@@ -488,6 +557,7 @@ split(byte* aNodeToSplit, uint32_t aDepth,  std::stack<CsbInnerNode_t*>* aPath, 
             ((CsbLeafNode_t*) aNodeToSplit)->moveKeysAndTids((CsbLeafNode_t*) lNodeSplittedRight, lNumKeysLeftSplit);
             lNodeParent->keys_[lIdxNodeToSplit] = ((CsbLeafNode_t*) aNodeToSplit)->getLargestKey();
         }
+        lNodeParent->setStopMarker();
 
     } else {
         // InnerNode
@@ -502,13 +572,6 @@ split(byte* aNodeToSplit, uint32_t aDepth,  std::stack<CsbInnerNode_t*>* aPath, 
     aResult->_splitIdx          = lNumKeysLeftSplit;
 }
 
-template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
-void
-CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-CsbInnerNode_t::
-remove(uint16_t aIdxToRemove) {
-    // TODO remove method
-}
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
@@ -823,7 +886,8 @@ getNumKeys() {
         lLeafEdgeFollowing = lLeafEdgeCurrent->following_;
         lNumKeysTotal += lLeafEdgeCurrent->numKeys_;
         for (uint16_t n = 1; n < kNumMaxKeysInnerNode; n++){
-            uint16_t lNumKeysCurrent = ((CsbLeafNode_t*) (lLeafEdgeCurrent + n))->numKeys_;
+            CsbLeafNode_t* lLeafCurrent = (CsbLeafNode_t*) lLeafEdgeCurrent + n;
+            uint16_t lNumKeysCurrent = lLeafCurrent->numKeys_;
             if (lNumKeysCurrent == NULL) {
                 break;
             }
@@ -834,4 +898,87 @@ getNumKeys() {
         lLeafEdgeCurrent = lLeafEdgeFollowing;
     } while (lLeafEdgeCurrent != nullptr);
     return lNumKeysTotal;
+}
+
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+uint64_t
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+getNumKeysBackwards() {
+    if (isLeaf(0)){
+        return ((CsbLeafEdgeNode_t*) this->root_)->numKeys_;
+    }
+
+    CsbInnerNode_t*     lNodeCurrent        = (CsbInnerNode_t *) this->root_;
+    CsbLeafEdgeNode_t*  lLeafEdgeCurrent;
+    CsbLeafNode_t*      lLeafCurrent;
+    CsbLeafEdgeNode_t*  lLeafEdgePrevious;
+    uint64_t            lNumKeysTotal       = 0;
+
+    for (uint64_t iDepth = 1; iDepth < this->depth_; iDepth++){
+        lNodeCurrent = (CsbInnerNode_t*) getKthNode(lNodeCurrent->numKeys_ - 1, lNodeCurrent->children_);
+    }
+
+    lLeafEdgeCurrent = (CsbLeafEdgeNode_t*) lNodeCurrent->children_;
+
+    do {
+        lLeafEdgePrevious = lLeafEdgeCurrent->previous_;
+        lNumKeysTotal += lLeafEdgeCurrent->numKeys_;
+        for (uint16_t n = 1; n < kNumMaxKeysInnerNode; n++){
+            CsbLeafNode_t* lLeafCurrent = (CsbLeafNode_t*) lLeafEdgeCurrent + n;
+            uint16_t lNumKeysCurrent = lLeafCurrent->numKeys_;
+            if (lNumKeysCurrent == NULL) {
+                break;
+            }
+            else {
+                lNumKeysTotal += lNumKeysCurrent;
+            }
+        }
+        lLeafEdgeCurrent = lLeafEdgePrevious;
+    } while (lLeafEdgeCurrent != nullptr);
+    return lNumKeysTotal;
+}
+
+
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+bool
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+verifyOrder() {
+    if (isLeaf(0)){
+        return ((CsbLeafEdgeNode_t*) this->root_)->numKeys_;
+    }
+
+    CsbInnerNode_t*     lNodeCurrent        = (CsbInnerNode_t *) this->root_;
+    CsbLeafEdgeNode_t*  lLeafEdgeCurrent;
+    CsbLeafNode_t*      lLeafCurrent;
+    CsbLeafEdgeNode_t*  lLeafEdgeFollowing;
+
+    for (uint64_t iDepth = 0; iDepth < this->depth_; iDepth++){
+        lNodeCurrent = (CsbInnerNode_t*) lNodeCurrent->children_;
+    }
+
+    lLeafEdgeCurrent = (CsbLeafEdgeNode_t*) lNodeCurrent;
+    Key_t lPreviousKey;
+    bool lFirstKey = true;
+
+    do {
+        lLeafEdgeFollowing = lLeafEdgeCurrent->following_;
+        for (uint16_t i = 0; i<lLeafEdgeCurrent->numKeys_; i++){
+            if (lLeafEdgeCurrent->keys_[i] <= lPreviousKey && !lFirstKey){
+                return false;
+            } else{
+                lFirstKey = false;
+            }
+        }
+
+        for (uint16_t n = 1; n < kNumMaxKeysInnerNode; n++){
+            CsbLeafNode_t* lLeafCurrent = (CsbLeafNode_t*) lLeafEdgeCurrent + n;
+            for (uint16_t i = 0; i<lLeafCurrent->numKeys_ != NULL; i++){
+                if (lLeafCurrent->keys_[i] <= lPreviousKey && !lFirstKey){
+                    return false;
+                }
+            }
+        }
+        lLeafEdgeCurrent = lLeafEdgeFollowing;
+    } while (lLeafEdgeCurrent != nullptr);
+    return true;
 }

@@ -76,12 +76,12 @@ int insert_incr(uint32_t maxKeys, uint32_t savePoint, std::string basePath) {
     return 0;
 }
 
-int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath){
-    std::cout << "Inserting randomly" << std::endl;
+int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath,uint64_t seed){
+    std::cout << "Inserting randomly with seed " << seed  << std::endl;
 
     Tree_t tree = Tree_t();
 
-    std::minstd_rand0 random(1939992u);
+    std::minstd_rand0 random(seed);
     std::vector<uint32_t > inserted_vals;
 
 
@@ -107,16 +107,17 @@ int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath){
         if (!tree.verifyOrder()) std::cout << "Tree out of order" << std::endl;
 
     }
-
     return 0;
 }
 
 int main() {
     std::string basePath = "/home/sebas/dev/Uni/master_thesis/csbplustree/visual/trees/";
-    uint32_t maxKeys = 10000;
+    uint32_t maxKeys = 100000;
     uint32_t savePoint = 9973;
+    uint32_t randomCnt = 5;
 
-    insert_rand(maxKeys, savePoint, basePath);
+    for (uint32_t i = 0; i < randomCnt; i++)
+        insert_rand(maxKeys, savePoint, basePath, std::chrono::system_clock::now().time_since_epoch().count());
     insert_decr(maxKeys, savePoint, basePath);
     insert_incr(maxKeys, savePoint, basePath);
 

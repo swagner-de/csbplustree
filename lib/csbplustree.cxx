@@ -240,6 +240,7 @@ insert(Key_t aKey, Tid_t aTid) {
     SearchResult_tt                     lSearchResult;
     bool                                lIsLeafEdge;
     bool                                lIsFull;
+    bool                                lRevisitRoot;
 
 
     findLeafForInsert(aKey, &lSearchResult, &lPath);
@@ -247,7 +248,7 @@ insert(Key_t aKey, Tid_t aTid) {
     lIsLeafEdge     = lSearchResult._idx == 0;
     lIsFull         = (lIsLeafEdge && ((CsbLeafEdgeNode_t*) lSearchResult._node)->numKeys_ == kNumMaxKeysLeafEdgeNode) ||
             (!lIsLeafEdge &&  ((CsbLeafNode_t*) lSearchResult._node)->numKeys_ == kNumMaxKeysLeafNode);
-
+    lRevisitRoot    = lIsFull && this->depth_ == 0;
 
     // check if space is available and split if necessary
     if (lIsFull) {
@@ -257,6 +258,13 @@ insert(Key_t aKey, Tid_t aTid) {
 
         // determine which of resulting nodes is the node to insert an look up if it is a edge or not
         if (getLargestKey(lSplitResult._left, true, lSplitResult._edgeIndicator) < aKey) {
+            /*
+             * if root has been splitted, is now an InnerNode and as the aKey could be larger
+             * than the largest key seen so far, we update it
+             */
+            if (lRevisitRoot) {
+                findLeafForInsert(aKey, &lSearchResult, &lPath);
+            }
             lPtrNodeLeaf = lSplitResult._left + kSizeNode;
             lIsLeafEdge = false;
         } else {

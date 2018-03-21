@@ -16,7 +16,6 @@ inline void checkResult(Tree_t* aTree, uint32_t aKey, uint64_t aTid){
     uint64_t lRes;
     if (aTree->find(aKey, &lRes) != 0) {
         std::cout << "Key " << aKey << " not found" << std::endl;
-        aTree->find(aKey, &lRes);
     } else if (lRes != aTid){
         std::cout << "Value " << lRes << " at lookup of " << aKey << " incorrect" << std::endl;
     }
@@ -112,6 +111,7 @@ int main() {
     uint32_t maxKeys = 10000;
     uint32_t savePoint = 9973;
     uint32_t randomCnt = 5;
+
 
     for (uint32_t i = 0; i < randomCnt; i++)
         insert_rand(maxKeys, savePoint, basePath, std::chrono::system_clock::now().time_since_epoch().count());

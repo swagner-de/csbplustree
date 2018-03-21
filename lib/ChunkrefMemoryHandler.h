@@ -47,8 +47,8 @@ namespace ChunkRefMemoryHandler {
     class MemoryChunk_t {
     public:
         MemoryChunk_t();
-        ~MemoryChunk_t();
 
+        void freeChunk();
         uint32_t getBytesAllocated();
         byte *getMem(uint16_t aSize);
         bool verify();
@@ -71,6 +71,7 @@ namespace ChunkRefMemoryHandler {
     class MemoryHandler_t {
     public:
         MemoryHandler_t();
+        ~MemoryHandler_t();
 
         byte* getMem(uint32_t aSize);
         bool verifyPointers();

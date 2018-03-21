@@ -31,11 +31,12 @@ MemoryChunk_t() {
     new(begin_) UnusedMemorySubchunk_t(kSizeChunk);
     firstFree_ = (UnusedMemorySubchunk_t *) begin_;
 }
+
 template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+void
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
-~MemoryChunk_t() {
-    // TODO release memory
-    //free((void *) begin_);
+freeChunk(){
+    free((void*) begin_);
 }
 
 template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
@@ -254,6 +255,14 @@ MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 MemoryHandler_t() {
     chunks_.push_back(ThisMemoryChunk_t());
 }
+template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
+~MemoryHandler_t() {
+    for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
+        lIt->freeChunk();
+    }
+}
+
 
 template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 byte*
@@ -291,9 +300,6 @@ release(byte *aStartAddr, uint16_t aSize) {
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
         if (lIt->contains(aStartAddr)) {
             lIt->release(aStartAddr, aSize);
-            if (lIt->isFullyUnallocated()) {
-                // TODO how do is safely delete an item without breaking the array while looping
-            }
             return;
         }
     }

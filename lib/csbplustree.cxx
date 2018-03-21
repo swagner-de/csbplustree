@@ -22,6 +22,13 @@ CsbTree_t() {
     static_assert(kNumMaxKeysLeafNode >= (kNumMaxKeysLeafEdgeNode / 2));
     // TODO assert that a InnerNode has space for 2 more nodes after a split
 }
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+~CsbTree_t() {
+    delete(tmm_);
+}
+
+
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::

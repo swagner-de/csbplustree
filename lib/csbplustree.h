@@ -42,6 +42,7 @@ private:
 public:
 
     CsbTree_t();
+    ~CsbTree_t();
 
 
     class CsbInnerNode_t{

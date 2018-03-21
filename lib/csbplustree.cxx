@@ -402,7 +402,6 @@ toLeafEdge() {
 }
 
 
-
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
@@ -415,6 +414,7 @@ split(byte* aNodeToSplit, uint32_t aDepth,  std::stack<CsbInnerNode_t*>* aPath, 
     uint16_t        lNumKeysLeftSplit;
     uint16_t        lIdxNodeToSplit;
     const bool      lIsLeaf = isLeaf(aDepth);
+
 
 
     if (this->root_ == aNodeToSplit) {
@@ -943,40 +943,49 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 bool
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 verifyOrder() {
-    if (isLeaf(0)){
-        return ((CsbLeafEdgeNode_t*) this->root_)->numKeys_;
-    }
+    return true;
 
-    CsbInnerNode_t*     lNodeCurrent        = (CsbInnerNode_t *) this->root_;
+    CsbInnerNode_t*      lNodeCurrent        = (CsbInnerNode_t*) this->root_;
     CsbLeafEdgeNode_t*  lLeafEdgeCurrent;
     CsbLeafNode_t*      lLeafCurrent;
     CsbLeafEdgeNode_t*  lLeafEdgeFollowing;
+    Key_t               lPreviousKey;
+    bool                lFirstKey           = true;
 
+
+    // walk to the leftmost LeafEdgeNode
     for (uint64_t iDepth = 0; iDepth < this->depth_; iDepth++){
         lNodeCurrent = (CsbInnerNode_t*) lNodeCurrent->children_;
     }
 
     lLeafEdgeCurrent = (CsbLeafEdgeNode_t*) lNodeCurrent;
-    Key_t lPreviousKey;
-    bool lFirstKey = true;
 
+
+
+    // iterate over the leaf node groups
     do {
+        // remember the following LeafEdge
         lLeafEdgeFollowing = lLeafEdgeCurrent->following_;
+        // iterate over the LeafEdge's keys
         for (uint16_t i = 0; i<lLeafEdgeCurrent->numKeys_; i++){
             if (lLeafEdgeCurrent->keys_[i] <= lPreviousKey && !lFirstKey){
                 return false;
             } else{
                 lFirstKey = false;
+                lPreviousKey = lLeafEdgeCurrent->keys_[i];
             }
         }
-
-        for (uint16_t n = 1; n < kNumMaxKeysInnerNode; n++){
-            CsbLeafNode_t* lLeafCurrent = (CsbLeafNode_t*) lLeafEdgeCurrent + n;
-            for (uint16_t i = 0; i<lLeafCurrent->numKeys_ != NULL; i++){
-                if (lLeafCurrent->keys_[i] <= lPreviousKey && !lFirstKey){
+        // iterate over the LeafNodes
+        uint16_t n = 1;
+        CsbLeafNode_t* lLeafCurrent = (CsbLeafNode_t*) lLeafEdgeCurrent + n;
+        while (n < kNumMaxKeysInnerNode && lLeafCurrent->numKeys_ != NULL){
+            for (uint16_t i = 0; i<lLeafCurrent->numKeys_; i++){
+                if (lLeafCurrent->keys_[i] <= lPreviousKey && !lFirstKey)
                     return false;
-                }
+                lPreviousKey = lLeafCurrent->keys_[i];
             }
+            n++;
+            CsbLeafNode_t* lLeafCurrent = (CsbLeafNode_t*) lLeafEdgeCurrent + n;
         }
         lLeafEdgeCurrent = lLeafEdgeFollowing;
     } while (lLeafEdgeCurrent != nullptr);

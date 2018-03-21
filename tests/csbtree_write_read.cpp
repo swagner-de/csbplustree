@@ -26,7 +26,7 @@ int insert_decr(uint32_t maxKeys, uint32_t savePoint, std::string basePath) {
     Tree_t tree = Tree_t();
     uint64_t numKeysTree;
 
-    std::cout << "Inserting from right to left" << std::endl;
+    std::cout << "Inserting keys decreasingly" << std::endl;
 
     for (uint32_t i = maxKeys; i != 0; i--) {
         tree.insert(i, mapKey(i));
@@ -41,8 +41,8 @@ int insert_decr(uint32_t maxKeys, uint32_t savePoint, std::string basePath) {
             checkResult(&tree, j, mapKey(j));
 
 
-        if (i == savePoint)
-            tree.saveTreeAsJson(basePath + "tree1_at" + std::to_string(i) + ".json");
+        if (numKeysTree == savePoint)
+            tree.saveTreeAsJson(basePath + "tree_decr_at" + std::to_string(numKeysTree) + ".json");
 
         if (!tree.verifyOrder()) std::cout << "Tree out of order" << std::endl;
     }
@@ -50,7 +50,7 @@ int insert_decr(uint32_t maxKeys, uint32_t savePoint, std::string basePath) {
 }
 
 int insert_incr(uint32_t maxKeys, uint32_t savePoint, std::string basePath) {
-    std::cout << "Inserting from left to right" << std::endl;
+    std::cout << "Inserting keys increasingly" << std::endl;
 
     Tree_t tree = Tree_t();
     uint64_t numKeysTree;
@@ -69,6 +69,9 @@ int insert_incr(uint32_t maxKeys, uint32_t savePoint, std::string basePath) {
         for (uint64_t j = 0; j <= i; j++)
             checkResult(&tree, j, mapKey(j));
 
+        if (numKeysTree == savePoint)
+            tree.saveTreeAsJson(basePath + "tree_incr_at" + std::to_string(numKeysTree) + ".json");
+
         if (!tree.verifyOrder()) std::cout << "Tree out of order" << std::endl;
     }
     return 0;
@@ -80,14 +83,14 @@ int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath,uint6
     Tree_t tree = Tree_t();
 
     std::minstd_rand0 random(seed);
-    std::vector<uint32_t > inserted_vals;
+    uint32_t inserted_vals[maxKeys];
 
 
     uint64_t numKeysTree;
 
     for (uint32_t i = 0; i != maxKeys; i++) {
         uint32_t  r_val = random();
-        inserted_vals.push_back(r_val);
+        inserted_vals[i] = r_val;
         tree.insert(r_val, mapKey(r_val));
         numKeysTree = tree.getNumKeys();
         if (i +1 != numKeysTree)
@@ -96,8 +99,11 @@ int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath,uint6
         if (tree.getNumKeysBackwards() != numKeysTree)
             std::cout << "Backwards count incorrect" << std::endl;
 
-        for (auto iter = inserted_vals.begin(); iter != inserted_vals.end(); iter++)
-            checkResult(&tree, *iter, mapKey(*iter));
+        for (uint32_t j = 0; j != i; j++)
+            checkResult(&tree, inserted_vals[j], mapKey(inserted_vals[j]));
+
+        if (numKeysTree == savePoint)
+            tree.saveTreeAsJson(basePath + "tree_rand_"+ std::to_string(seed) + "_at" + std::to_string(numKeysTree) + ".json");
 
         if (!tree.verifyOrder())
             std::cout << "Tree out of order" << std::endl;
@@ -109,7 +115,7 @@ int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath,uint6
 int main() {
     std::string basePath = "/home/sebas/dev/Uni/master_thesis/csbplustree/visual/trees/";
     uint32_t maxKeys = 10000;
-    uint32_t savePoint = 9973;
+    uint32_t savePoint = 100;
     uint32_t randomCnt = 5;
 
 

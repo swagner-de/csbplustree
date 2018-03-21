@@ -90,9 +90,6 @@ int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath,uint6
     for (uint32_t i = 0; i != maxKeys; i++) {
         uint32_t  r_val = random();
         inserted_vals.push_back(r_val);
-        if (i == 82) {
-            std::cout << "";
-        }
         tree.insert(r_val, mapKey(r_val));
         numKeysTree = tree.getNumKeys();
         if (i +1 != numKeysTree)
@@ -104,7 +101,10 @@ int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath,uint6
         for (auto iter = inserted_vals.begin(); iter != inserted_vals.end(); iter++)
             checkResult(&tree, *iter, mapKey(*iter));
 
-        if (!tree.verifyOrder()) std::cout << "Tree out of order" << std::endl;
+        if (!tree.verifyOrder()){
+            std::cout << "Tree out of order" << std::endl;
+            tree.verifyOrder();
+        }
 
     }
     return 0;
@@ -112,7 +112,7 @@ int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath,uint6
 
 int main() {
     std::string basePath = "/home/sebas/dev/Uni/master_thesis/csbplustree/visual/trees/";
-    uint32_t maxKeys = 100000;
+    uint32_t maxKeys = 10000;
     uint32_t savePoint = 9973;
     uint32_t randomCnt = 5;
 

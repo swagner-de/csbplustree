@@ -106,12 +106,6 @@ public:
     } __attribute__((packed));
 
 
-    struct SplitResult_tt{
-        byte*       _left;
-        uint16_t    _splitIdx;
-        bool        _edgeIndicator;
-    };
-
     struct SearchResult_tt {
         byte*       _node;
         uint16_t    _idx;
@@ -124,19 +118,30 @@ public:
         }
     };
 
-    void findLeafNode(Key_t aKey, SearchResult_tt* aResult);
-    void findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_t*>* aPath);
+
     int32_t find(Key_t aKey, Tid_t* aResult);
     void insert(Key_t aKey, Tid_t aTid);
     void remove(Key_t aKey, Tid_t aTid);
-    void split(byte* aNodeToSplit, uint32_t aDepth, std::stack<CsbInnerNode_t*>* aPath, SplitResult_tt* aResult);
     void saveTreeAsJson(std::string aPath);
     void getMemoryUsage();
-    inline bool isLeaf(uint32_t aDepth);
-    std::string getTreeAsJson();
     uint64_t getNumKeys();
     uint64_t getNumKeysBackwards();
     bool verifyOrder();
+
+private:
+
+    struct SplitResult_tt{
+        byte*       _left;
+        uint16_t    _splitIdx;
+        bool        _edgeIndicator;
+    };
+
+    void split(byte* aNodeToSplit, uint32_t aDepth, std::stack<CsbInnerNode_t*>* aPath, SplitResult_tt* aResult);
+    inline bool isLeaf(uint32_t aDepth);
+    std::string getTreeAsJson();
+    void findLeafNode(Key_t aKey, SearchResult_tt* aResult);
+    void findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_t*>* aPath);
+
 
     static std::string kThChildrenAsJson(uint32_t aK, byte* aFirstChild, uint32_t aNodeDepth, uint32_t aTreeDepth);
     static Key_t getLargestKey(byte* aNode, bool aChild, bool aEdge);

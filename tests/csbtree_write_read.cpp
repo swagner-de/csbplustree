@@ -19,7 +19,6 @@ inline void checkResult(Tree_t* aTree, uint32_t aKey, uint64_t aTid){
         aTree->find(aKey, &lRes);
     } else if (lRes != aTid){
         std::cout << "Value " << lRes << " at lookup of " << aKey << " incorrect" << std::endl;
-        aTree->find(aKey, &lRes);
     }
 }
 
@@ -101,10 +100,8 @@ int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath,uint6
         for (auto iter = inserted_vals.begin(); iter != inserted_vals.end(); iter++)
             checkResult(&tree, *iter, mapKey(*iter));
 
-        if (!tree.verifyOrder()){
+        if (!tree.verifyOrder())
             std::cout << "Tree out of order" << std::endl;
-            tree.verifyOrder();
-        }
 
     }
     return 0;

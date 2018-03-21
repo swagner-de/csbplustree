@@ -943,7 +943,6 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 bool
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 verifyOrder() {
-    return true;
 
     CsbInnerNode_t*      lNodeCurrent        = (CsbInnerNode_t*) this->root_;
     CsbLeafEdgeNode_t*  lLeafEdgeCurrent;
@@ -977,15 +976,15 @@ verifyOrder() {
         }
         // iterate over the LeafNodes
         uint16_t n = 1;
-        CsbLeafNode_t* lLeafCurrent = (CsbLeafNode_t*) lLeafEdgeCurrent + n;
-        while (n < kNumMaxKeysInnerNode && lLeafCurrent->numKeys_ != NULL){
+        CsbLeafNode_t* lLeafCurrent = (CsbLeafNode_t*) getKthNode(n, (byte*) lLeafEdgeCurrent);
+        while (n < kNumMaxKeysInnerNode && lLeafCurrent->numKeys_ != 0){
             for (uint16_t i = 0; i<lLeafCurrent->numKeys_; i++){
                 if (lLeafCurrent->keys_[i] <= lPreviousKey && !lFirstKey)
                     return false;
                 lPreviousKey = lLeafCurrent->keys_[i];
             }
             n++;
-            CsbLeafNode_t* lLeafCurrent = (CsbLeafNode_t*) lLeafEdgeCurrent + n;
+            lLeafCurrent++;
         }
         lLeafEdgeCurrent = lLeafEdgeFollowing;
     } while (lLeafEdgeCurrent != nullptr);

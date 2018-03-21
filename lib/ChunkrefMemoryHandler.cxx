@@ -255,6 +255,7 @@ MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 MemoryHandler_t() {
     chunks_.push_back(ThisMemoryChunk_t());
 }
+
 template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 ~MemoryHandler_t() {
@@ -262,6 +263,7 @@ MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
         lIt->freeChunk();
     }
 }
+
 
 
 template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>

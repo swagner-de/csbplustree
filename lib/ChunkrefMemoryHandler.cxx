@@ -19,7 +19,6 @@ UnusedMemorySubchunk_t(uint16_t aSize, UnusedMemorySubchunk_t *aNextFree) {
 byte*
 UnusedMemorySubchunk_t::
 deliver() {
-    std::memset(this, 0, this->size_);
     return ((byte*) this);
 }
 

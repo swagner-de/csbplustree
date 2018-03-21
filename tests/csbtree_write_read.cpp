@@ -1,7 +1,6 @@
 #include <iostream>
 #include <chrono>
 #include <random>
-#include <vector>
 #include "../lib/csbplustree.h"
 
 
@@ -117,7 +116,6 @@ int main() {
     uint32_t maxKeys = 10000;
     uint32_t savePoint = 100;
     uint32_t randomCnt = 5;
-    insert_rand(maxKeys, savePoint, basePath, 1521645670110360008);
 
     for (uint32_t i = 0; i < randomCnt; i++)
         insert_rand(maxKeys, savePoint, basePath, std::chrono::system_clock::now().time_since_epoch().count());

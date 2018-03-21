@@ -111,11 +111,20 @@ int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath,uint6
     return 0;
 }
 
-int main() {
-    std::string basePath = "/home/sebas/dev/Uni/master_thesis/csbplustree/visual/trees/";
-    uint32_t maxKeys = 10000;
-    uint32_t savePoint = 100;
+int main(int argc, char *argv[]) {
+
+    if (argc != 4){
+        std::cout << "Usage:" << std::endl;
+        std::cout << "csbtree_write_read [number keys to insert] [dump tree as json after # keys] [folder for json]" << std::endl;
+        return 1;
+    }
+
+    uint32_t maxKeys = std::stoi(argv[1]);
+    uint32_t savePoint = std::stoi(argv[2]);
+    std::string basePath = argv[3];
     uint32_t randomCnt = 5;
+
+    std::cout << "maxKeys: " << maxKeys << " | savePoint: " << savePoint << " | basePath: " << basePath << std::endl;
 
     for (uint32_t i = 0; i < randomCnt; i++)
         insert_rand(maxKeys, savePoint, basePath, std::chrono::system_clock::now().time_since_epoch().count());

@@ -5,16 +5,10 @@
 using namespace ChunkRefMemoryHandler;
 
 UnusedMemorySubchunk_t::
-UnusedMemorySubchunk_t(uint16_t aSize) {
-    size_ = aSize;
-    nextFree_= nullptr;
-}
+UnusedMemorySubchunk_t(uint16_t aSize) : size_(aSize), nextFree_(nullptr) {}
 
 UnusedMemorySubchunk_t::
-UnusedMemorySubchunk_t(uint16_t aSize, UnusedMemorySubchunk_t *aNextFree) {
-    nextFree_ = aNextFree;
-    size_ = aSize;
-}
+UnusedMemorySubchunk_t(uint16_t aSize, UnusedMemorySubchunk_t *aNextFree) : size_(aSize), nextFree_(aNextFree) {}
 
 byte*
 UnusedMemorySubchunk_t::

@@ -31,6 +31,11 @@ namespace ChunkRefMemoryHandler {
         }
     };
 
+    struct MemUsageStats_t{
+        uint32_t _numChunksAlloc;
+        uint32_t _bytesFree;
+    };
+
     class UnusedMemorySubchunk_t {
     public:
         uint16_t                size_;
@@ -78,6 +83,8 @@ namespace ChunkRefMemoryHandler {
         void release(byte *aStartAddr, uint16_t aSize);
         std::vector<uint32_t>* getBytesAllocatedPerChunk();
         void printUsage();
+        void getUsage(MemUsageStats_t& result);
+
 
     private:
         typedef MemoryChunk_t< kSizeChunk, kSizeCacheLine, kBestFit> ThisMemoryChunk_t;

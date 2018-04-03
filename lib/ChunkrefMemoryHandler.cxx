@@ -315,16 +315,26 @@ getBytesAllocatedPerChunk(){
 template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 void
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
-printUsage(){
-    uint32_t lAllocated = this->chunks_.size() * kSizeChunk;
-    uint32_t lChunks = this->chunks_.size();
-    uint32_t lFree = 0;
+getUsage(MemUsageStats_t &aResult) {
+    aResult._numChunksAlloc = this->chunks_.size();
+    aResult._bytesFree = 0;
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
-        lFree= lIt->getFree();
+        aResult._bytesFree += lIt->getFree();
     }
 
-    std::cout << " --- Memory Usage --- "<< std::endl;
-    std::cout << " Chunks allocated: " << lChunks << std::endl;
-    std::cout << " Memory allocated: " << lAllocated/1024 << std::endl;
-    std::cout << " Free            : " << lFree/1024 << std::endl;
 }
+
+template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+void
+MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
+printUsage() {
+    MemUsageStats_t lMemStats;
+    this->getUsage(lMemStats);
+
+
+    std::cout << " --- Memory Usage --- " << std::endl;
+    std::cout << " Chunks allocated: " << lMemStats._numChunksAlloc << std::endl;
+    std::cout << " Memory allocated: " << (lMemStats._numChunksAlloc * kSizeChunk) / 1024 << std::endl;
+    std::cout << " Free            : " << lMemStats._bytesFree / 1024 << std::endl;
+}
+

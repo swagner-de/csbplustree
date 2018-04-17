@@ -82,22 +82,21 @@ int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath,uint6
     Tree_t tree = Tree_t();
 
     std::minstd_rand0 random(seed);
-    uint32_t inserted_vals[maxKeys];
+    uint32_t* inserted_vals = new uint32_t[maxKeys];
 
 
     uint64_t numKeysTree;
 
     for (uint32_t i = 0; i != maxKeys; i++) {
-        uint32_t  r_val = random();
-        inserted_vals[i] = r_val;
-        tree.insert(r_val, mapKey(r_val));
+        inserted_vals[i] = random();
+        tree.insert(inserted_vals[i] , mapKey(inserted_vals[i]
+        ));
         numKeysTree = tree.getNumKeys();
         if (i +1 != numKeysTree)
             std::cout << "#Keys does not match! Was " << numKeysTree << " but should be " << (i+1) << std::endl;
 
         if (tree.getNumKeysBackwards() != numKeysTree)
             std::cout << "Backwards count incorrect" << std::endl;
-
         for (uint32_t j = 0; j != i; j++)
             checkResult(&tree, inserted_vals[j], mapKey(inserted_vals[j]));
 
@@ -108,6 +107,7 @@ int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath,uint6
             std::cout << "Tree out of order" << std::endl;
 
     }
+    delete[](inserted_vals);
     return 0;
 }
 

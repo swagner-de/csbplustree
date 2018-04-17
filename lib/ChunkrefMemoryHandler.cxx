@@ -5,10 +5,10 @@
 using namespace ChunkRefMemoryHandler;
 
 UnusedMemorySubchunk_t::
-UnusedMemorySubchunk_t(uint16_t aSize) : size_(aSize), nextFree_(nullptr) {}
+UnusedMemorySubchunk_t(uint32_t aSize) : size_(aSize), nextFree_(nullptr) {}
 
 UnusedMemorySubchunk_t::
-UnusedMemorySubchunk_t(uint16_t aSize, UnusedMemorySubchunk_t *aNextFree) : size_(aSize), nextFree_(aNextFree) {}
+UnusedMemorySubchunk_t(uint32_t aSize, UnusedMemorySubchunk_t *aNextFree) : size_(aSize), nextFree_(aNextFree) {}
 
 byte*
 UnusedMemorySubchunk_t::
@@ -16,7 +16,7 @@ deliver() {
     return ((byte*) this);
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 MemoryChunk_t() {
     if (posix_memalign((void **) &this->begin_, kSizeCacheLine, kSizeChunk)) {
@@ -26,14 +26,14 @@ MemoryChunk_t() {
     firstFree_ = (UnusedMemorySubchunk_t *) begin_;
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 void
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 freeChunk(){
     free((void*) begin_);
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 uint32_t
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 getBytesAllocated(){
@@ -46,10 +46,10 @@ getBytesAllocated(){
     return lSumAllocated;
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 byte*
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
-getMem(uint16_t aSize) {
+getMem(uint32_t aSize) {
     // assert to have a size of at least one cache line to assure a UnusedMemorySubchunk will fit
     aSize = roundUp(aSize);
     byte* lAddr =(kBestFit) ? bestFit(aSize) : firstFit(aSize);
@@ -58,7 +58,7 @@ getMem(uint16_t aSize) {
     } else return lAddr;
 };
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 bool
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 verify() {
@@ -70,10 +70,10 @@ verify() {
     return true;
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 void
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
-release(byte *aStartAddr, uint16_t aSize) {
+release(byte *aStartAddr, uint32_t aSize) {
 if (firstFree_ == nullptr) {
     firstFree_ = new (aStartAddr) UnusedMemorySubchunk_t(aSize);
     return;
@@ -123,7 +123,7 @@ if (firstFree_ == nullptr) {
         lReleasedChunk->nextFree_ = lFollowingChunk->nextFree_;
     }
 }
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 uint32_t
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 getFree(){
@@ -136,7 +136,7 @@ getFree(){
     return lFree;
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 bool
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 contains(UnusedMemorySubchunk_t *aAddr) {
@@ -144,7 +144,7 @@ contains(UnusedMemorySubchunk_t *aAddr) {
 }
 
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 bool
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 contains(byte *aAddr) {
@@ -153,26 +153,26 @@ contains(byte *aAddr) {
             (begin_ + kSizeChunk > aAddr));
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 bool
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 isFullyUnallocated() {
     return (this->firstFree_->size_ == kSizeChunk);
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 uint16_t
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
-roundUp(uint16_t aSize) {
+roundUp(uint32_t aSize) {
     uint8_t remainder = aSize % kSizeCacheLine;
     if (remainder == 0) return aSize;
     else return aSize + kSizeCacheLine - remainder;
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 byte*
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
-firstFit(uint16_t aSize) {
+firstFit(uint32_t aSize) {
     UnusedMemorySubchunk_t **lPreviousChunkNextFree = &firstFree_;
     UnusedMemorySubchunk_t *lCurrent = firstFree_;
     UnusedMemorySubchunk_t *lRemaining;
@@ -199,10 +199,10 @@ firstFit(uint16_t aSize) {
     return nullptr;
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 byte*
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
-bestFit(uint16_t aSize) {
+bestFit(uint32_t aSize) {
 
     struct BestFittingChunk_t {
         UnusedMemorySubchunk_t *_self;
@@ -244,13 +244,13 @@ bestFit(uint16_t aSize) {
 }
 
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 MemoryHandler_t() {
     chunks_.push_back(ThisMemoryChunk_t());
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 ~MemoryHandler_t() {
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
@@ -260,7 +260,7 @@ MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 
 
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 byte*
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 getMem(uint32_t aSize) {
@@ -278,7 +278,7 @@ getMem(uint32_t aSize) {
     return chunks_.back().getMem(aSize);
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 bool
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 verifyPointers(){
@@ -288,10 +288,10 @@ verifyPointers(){
     }
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 void
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
-release(byte *aStartAddr, uint16_t aSize) {
+release(byte *aStartAddr, uint32_t aSize) {
     // find the chunk that contains the startAddr
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
         if (lIt->contains(aStartAddr)) {
@@ -301,7 +301,7 @@ release(byte *aStartAddr, uint16_t aSize) {
     }
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 std::vector<uint32_t>*
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 getBytesAllocatedPerChunk(){
@@ -312,7 +312,7 @@ getBytesAllocatedPerChunk(){
             return lResults;
         }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 void
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 getUsage(MemUsageStats_t &aResult) {
@@ -324,7 +324,7 @@ getUsage(MemUsageStats_t &aResult) {
 
 }
 
-template<uint16_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 void
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 printUsage() {

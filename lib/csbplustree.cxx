@@ -10,12 +10,11 @@
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-CsbTree_t() {
+CsbTree_t() : depth_(0) {
     tmm_ = new TreeMemoryManager_t;
     root_ = tmm_->getMem(kNumMaxKeysInnerNode *kSizeNode);
     new(root_) CsbLeafEdgeNode_t;
     ((CsbLeafNode_t*) getKthNode(1, root_))->numKeys_ = 0; // stop marker
-    depth_ = 0;
     static_assert(kSizeNode == sizeof(CsbInnerNode_t));
     static_assert(kSizeNode == sizeof(CsbLeafNode_t));
     static_assert(kSizeNode == sizeof(CsbLeafEdgeNode_t));

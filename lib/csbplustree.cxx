@@ -230,6 +230,21 @@ insert(Key_t aKey, Tid_t aTid) {
     this->numKeys_ += 1;
 }
 
+
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+const uint16_t
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+getCacheLinesPerNode() {
+    return kNumCacheLinesPerInnerNode;
+}
+
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+void
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+insert(std::pair<Key_t, Tid_t> aKeyVal) {
+    insert(aKeyVal.first, aKeyVal.second);
+}
+
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::

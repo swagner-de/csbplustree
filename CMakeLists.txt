@@ -7,12 +7,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Weffc++")
 
 
-
-include_directories( ${MY_SOURCE_DIR}/lib )
-
 add_executable(csbtree_write_read tests/csbtree_write_read.cpp)
 add_executable(perf_test tests/perf.cpp)
-
+add_library(csvwriter src/CsvWriter_t.cxx)
+target_link_libraries(perf_test csvwriter)
 
 find_package(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
 ADD_DEFINITIONS(-DBOOST_TEST_DYN_LINK)

@@ -92,6 +92,6 @@ namespace ChunkRefMemoryHandler {
     };
 };
 
-#include "ChunkrefMemoryHandler.cxx"
+#include "../src/ChunkrefMemoryHandler.cxx"
 
 #endif //CSBPLUSTREE_CHUNKREFMEMORYHANDLER_H

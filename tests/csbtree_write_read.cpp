@@ -1,7 +1,7 @@
 #include <iostream>
 #include <chrono>
 #include <random>
-#include "../lib/csbplustree.h"
+#include "../include/csbplustree.h"
 
 
 typedef CsbTree_t<uint32_t , uint64_t, 1> Tree_t;

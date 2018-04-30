@@ -154,6 +154,6 @@ private:
 
 };
 
-#include "csbplustree.cxx"
+#include "../src/csbplustree.cxx"
 
 #endif //CSBPLUSTREE_CSBPLUSTREE_H

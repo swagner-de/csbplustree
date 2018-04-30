@@ -89,3 +89,5 @@ cmake-build*/
 
 .directory
 *.patch
+*.csv
+*.out

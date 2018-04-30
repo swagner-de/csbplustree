@@ -109,11 +109,16 @@ template <class IndexStruc_t, class Key_t, class Tid_t>
 bool
 PerfTest_t<IndexStruc_t, Key_t, Tid_t>::
 run(TestResult_tt& aResult){
+    using namespace std;
+
+    cout << "prefilling..." << endl;
     prefill();
 
+    cout << "checking..." << endl;
     if (!check()) return false;
 
 
+    cout << "measuring insert..." << endl;
     aResult._measuredInsertedKeys = measure(
             &ThisPerfTest_t::insertK,
             config_._numKeysToInsert
@@ -121,12 +126,16 @@ run(TestResult_tt& aResult){
 
     if (!check()) return false;
 
+    cout << "measuring lookup" << endl;
     aResult._measuredLookupKeys = measure(
             &ThisPerfTest_t::findK,
             config_._numKeysToInsert
     );
 
+    cout << "verifying read values" << endl;
     if (!verifyAllRead()) return false;
+    cout << "done" << endl;
+
     aResult._sizeKeyT = sizeof(Key_t);
     aResult._sizeTidT = sizeof(Tid_t);
     if(config_._isCsbTree) aResult._numCacheLinesNode = idxStr_.getCacheLinesPerNode();

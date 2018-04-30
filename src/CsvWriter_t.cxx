@@ -55,5 +55,5 @@ CsvWriter_t::flushLine(const TestConfig_tt& aTestConfig, TestResult_tt& aPerfRes
             << aPerfResult._numCacheLinesNode << ","
             << aPerfResult._sizeKeyT << ","
             << aPerfResult._sizeTidT << ","
-            << endl;
+            << aPerfResult._status << endl;
 }

@@ -183,7 +183,9 @@ void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
 setStopMarker() {
-    ((CsbLeafNode_t*) getKthNode(this->numKeys_, this->children_))->numKeys_ = 0;
+    if (this->numKeys_ != kNumMaxKeysInnerNode){
+        ((CsbLeafNode_t*) getKthNode(this->numKeys_, this->children_))->numKeys_ = 0;
+    }
 }
 
 

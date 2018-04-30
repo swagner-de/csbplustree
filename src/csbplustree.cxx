@@ -833,6 +833,15 @@ find(Key_t aKey, Tid_t* aResult) {
     return -1;
 }
 
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+Tid_t
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+operator[](Key_t aKey) {
+    Tid_t lTid;
+    this->find(aKey, &lTid);
+    return lTid;
+}
+
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 bool

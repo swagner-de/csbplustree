@@ -20,7 +20,7 @@ PerfTest_t<IndexStruc_t, Key_t, Tid_t>::
 findK(uint64_t k){
     if (k > numKeysInserted_) k = numKeysInserted_;
     for (uint64_t i = 0; i < k; i++) {
-        idxStr_.find(keyTid_[i].first, &tidFound_[i]);
+        tidFound_[i] = idxStr_[keyTid_[i].first];
     }
     numKeysRead_ += k;
 }

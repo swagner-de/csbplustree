@@ -122,6 +122,7 @@ public:
 
     const uint16_t getCacheLinesPerNode();
     int32_t find(Key_t aKey, Tid_t* aResult);
+    inline Tid_t operator [] (Key_t aKey);
     void inline insert(Key_t aKey, Tid_t aTid);
     void insert(std::pair<Key_t, Tid_t>);
     void remove(Key_t aKey, Tid_t aTid);

@@ -1,0 +1,18 @@
+
+#ifndef CSBPLUSTREE_TESTRESULT_TT_H
+#define CSBPLUSTREE_TESTRESULT_TT_H
+
+#include <cstdint>
+#include <math.h>
+
+struct TestResult_tt{
+    double_t        _measuredInsertedKeys;
+    double_t        _measuredLookupKeys;
+    uint64_t        _sizeKeyT;
+    uint64_t        _sizeTidT;
+    uint64_t        _numCacheLinesNode;
+};
+
+
+
+#endif //CSBPLUSTREE_TESTRESULT_TT_H

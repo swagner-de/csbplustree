@@ -40,8 +40,6 @@ private:
 public:
     PerfTest_t(const TestConfig_tt &aConfig);
 
-    bool check();
-
     bool verifyAllRead();
 
     bool run(TestResult_tt &aResult);

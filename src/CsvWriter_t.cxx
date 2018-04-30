@@ -52,7 +52,7 @@ CsvWriter_t::flushLine(const TestConfig_tt& aTestConfig, TestResult_tt& aPerfRes
             << aTestConfig._lookupMethod << ","
             << aTestConfig._numKeysToLookup << ","
             << aPerfResult._measuredLookupKeys << ","
-            << aPerfResult._numCacheLinesNode << ","
+            << aPerfResult._name << ","
             << aPerfResult._sizeKeyT << ","
             << aPerfResult._sizeTidT << ","
             << aPerfResult._status << endl;

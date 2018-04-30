@@ -11,7 +11,7 @@ struct TestResult_tt{
     double_t        _measuredLookupKeys;
     uint64_t        _sizeKeyT;
     uint64_t        _sizeTidT;
-    uint64_t        _numCacheLinesNode;
+    std::string     _name;
     std::string     _status;
 };
 

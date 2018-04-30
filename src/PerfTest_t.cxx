@@ -8,7 +8,6 @@ template <class IndexStruc_t, class Key_t, class Tid_t>
 void
 PerfTest_t<IndexStruc_t, Key_t, Tid_t>::
 insertK(uint64_t k){
-
     for (uint64_t i = numKeysInserted_; i < numKeysInserted_ + k; i++){
         idxStr_.insert(keyTid_[i]);
     }
@@ -70,30 +69,6 @@ PerfTest_t(const TestConfig_tt& aConfig) : config_(aConfig), numKeysInserted_(0)
 };
 
 
-template <class IndexStruc_t, class Key_t, class Tid_t>
-bool
-PerfTest_t<IndexStruc_t, Key_t, Tid_t>::
-check(){
-    if (!config_._isCsbTree) return true;
-    // check the counts
-    if (idxStr_.getNumKeys() != numKeysInserted_) return false;
-    if (idxStr_.getNumKeysBackwards() != numKeysInserted_) return false;
-    // check the values
-    for (uint64_t i = 0; i < numKeysInserted_; i++){
-        if (idxStr_.find(keyTid_[i].first, &tidFound_[i]) != 0) {
-            return false;
-        }
-        if (tidFound_[i] != keyTid_[i].second){
-            return false;
-        }
-    }
-    //check the order
-    if (!idxStr_.verifyOrder()){
-        return false;
-    }
-    return true;
-}
-
 
 template <class IndexStruc_t, class Key_t, class Tid_t>
 bool
@@ -114,17 +89,12 @@ run(TestResult_tt& aResult){
     cout << "prefilling..." << endl;
     prefill();
 
-    cout << "checking..." << endl;
-    if (!check()) return false;
-
-
     cout << "measuring insert..." << endl;
     aResult._measuredInsertedKeys = measure(
             &ThisPerfTest_t::insertK,
             config_._numKeysToInsert
     );
 
-    if (!check()) return false;
 
     cout << "measuring lookup" << endl;
     aResult._measuredLookupKeys = measure(
@@ -133,12 +103,10 @@ run(TestResult_tt& aResult){
     );
 
     cout << "verifying read values" << endl;
-    if (!verifyAllRead()) return false;
     cout << "done" << endl;
 
     aResult._sizeKeyT = sizeof(Key_t);
     aResult._sizeTidT = sizeof(Tid_t);
-    if(config_._isCsbTree) aResult._numCacheLinesNode = idxStr_.getCacheLinesPerNode();
     return true;
 
 }

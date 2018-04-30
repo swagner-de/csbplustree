@@ -11,7 +11,6 @@ struct TestConfig_tt{
     uint64_t    _numKeysToInsert;
     string      _lookupMethod;
     uint64_t    _numKeysToLookup;
-    bool        _isCsbTree;
 };
 
 #endif //CSBPLUSTREE_TEXTCONFIG_TT_H

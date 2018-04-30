@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <math.h>
+#include <string>
 
 struct TestResult_tt{
     double_t        _measuredInsertedKeys;
@@ -11,6 +12,7 @@ struct TestResult_tt{
     uint64_t        _sizeKeyT;
     uint64_t        _sizeTidT;
     uint64_t        _numCacheLinesNode;
+    std::string     _status;
 };
 
 

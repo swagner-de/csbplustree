@@ -49,13 +49,16 @@ getBytesAllocated(){
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 byte*
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
-getMem(uint32_t aSize) {
+getMem(uint32_t aSize, bool aZeroed) {
     // assert to have a size of at least one cache line to assure a UnusedMemorySubchunk will fit
     aSize = roundUp(aSize);
     byte* lAddr =(kBestFit) ? bestFit(aSize) : firstFit(aSize);
     if (!contains(lAddr) && lAddr != NULL){
         throw MemAddrNotPartofChunk();
-    } else return lAddr;
+    } else {
+        if (aZeroed) memset(lAddr, 0, aSize);
+        return lAddr;
+    }
 };
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
@@ -263,13 +266,13 @@ MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 byte*
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
-getMem(uint32_t aSize) {
+getMem(uint32_t aSize, bool aZeroed) {
     if (aSize > kSizeChunk){
         throw MemAllocTooLarge();
     }
     byte *lFreeMem = nullptr;
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
-        lFreeMem = lIt->getMem(aSize);
+        lFreeMem = lIt->getMem(aSize, aZeroed);
         if (lFreeMem != nullptr) {
             return lFreeMem;
         }

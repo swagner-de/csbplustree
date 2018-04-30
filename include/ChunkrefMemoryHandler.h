@@ -55,7 +55,7 @@ namespace ChunkRefMemoryHandler {
 
         void freeChunk();
         uint32_t getBytesAllocated();
-        byte *getMem(uint32_t aSize);
+        byte *getMem(uint32_t aSize, bool aZeroed=false);
         bool verify();
         void release(byte *aStartAddr, uint32_t aSize);
         uint32_t getFree();
@@ -78,7 +78,7 @@ namespace ChunkRefMemoryHandler {
         MemoryHandler_t();
         ~MemoryHandler_t();
 
-        byte* getMem(uint32_t aSize);
+        byte* getMem(uint32_t aSize, bool aZeroed=false);
         bool verifyPointers();
         void release(byte *aStartAddr, uint32_t aSize);
         std::vector<uint32_t>* getBytesAllocatedPerChunk();

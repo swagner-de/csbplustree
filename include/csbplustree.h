@@ -7,14 +7,9 @@
 
 
 typedef typename std::byte byte;
-
-
 template <class Key_t, class Tid_t, uint16_t kNumCacheLinesPerNode>
-
-
-
 class CsbTree_t{
-private:
+    private:
     static constexpr uint16_t       kSizeCacheLine = 64;
     static constexpr uint32_t       kSizeNode = kSizeCacheLine * kNumCacheLinesPerNode;
 
@@ -40,6 +35,9 @@ private:
     uint32_t depth_;
 
 public:
+
+    using iterator = Tid_t*;
+
 
     CsbTree_t();
     ~CsbTree_t();
@@ -121,7 +119,9 @@ public:
 
 
     const uint16_t getCacheLinesPerNode();
-    int32_t find(Key_t aKey, Tid_t* aResult);
+
+    inline iterator find(Key_t);
+    inline int32_t find(Key_t aKey, Tid_t* aResult);
     inline Tid_t operator [] (Key_t aKey);
     void inline insert(Key_t aKey, Tid_t aTid);
     void insert(std::pair<Key_t, Tid_t>);

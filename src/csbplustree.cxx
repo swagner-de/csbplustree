@@ -788,9 +788,9 @@ findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_
 };
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
-int32_t
+typename CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::iterator
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-find(Key_t aKey, Tid_t* aResult) {
+find(Key_t aKey) {
 
     SearchResult_tt     lSearchResult;
     Key_t *             lKeys;
@@ -801,7 +801,7 @@ find(Key_t aKey, Tid_t* aResult) {
 
     this->findLeafNode(aKey, &lSearchResult);
     if (lSearchResult._node == nullptr) {
-        return -1;
+        return nullptr;
     }
 
 
@@ -816,30 +816,38 @@ find(Key_t aKey, Tid_t* aResult) {
 
     lIdxTid = idxToDescend(aKey, lKeys, lNumKeys);
     if (lIdxTid == UINT16_MAX){
-        return -1;
+        return nullptr;
     }
 
     if (lSearchResult._idx == 0) {
         if (((CsbLeafEdgeNode_t*) lSearchResult._node)->keys_[lIdxTid] == aKey){
-            *aResult =  ((CsbLeafEdgeNode_t*) lSearchResult._node)->tids_[lIdxTid];
-            return 0;
+            return &((CsbLeafEdgeNode_t*) lSearchResult._node)->tids_[lIdxTid];
         }
     } else {
         if (((CsbLeafNode_t*) lSearchResult._node)->keys_[lIdxTid] == aKey) {
-             *aResult = ((CsbLeafNode_t *) lSearchResult._node)->tids_[lIdxTid];
-            return 0;
+            return &((CsbLeafNode_t *) lSearchResult._node)->tids_[lIdxTid];
         }
     }
-    return -1;
+    return nullptr;
 }
+
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+int32_t
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+find(Key_t aKey, Tid_t* aResult) {
+    aResult = find(aKey);
+    if (aResult == nullptr) return -1;
+    return 0;
+
+}
+
+
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 Tid_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 operator[](Key_t aKey) {
-    Tid_t lTid;
-    this->find(aKey, &lTid);
-    return lTid;
+    return *find(aKey);
 }
 
 

@@ -10,12 +10,26 @@
 
 using std::fstream;
 
+static const string headerFields_[] = {
+        "preInsertedKeys",
+        "insertMethod",
+        "numInsertedKeys",
+        "measuredInsertedKeys",
+        "lookupMethod",
+        "numLookupKey",
+        "measuredLookupKeys",
+        "name",
+        "KeyT",
+        "TidT",
+        "status"
+};
+
+static const uint32_t lenHeaderFields_ = 11;
 
 class CsvWriter_t {
 private:
     fstream fileStream_;
-    const string *headerFields_;
-    const uint32_t lenHeaderFields_;
+
 
     bool fileExists(const string &filename);
 
@@ -23,7 +37,7 @@ private:
 
 
 public:
-    CsvWriter_t(const string &aFilePath, const string *aHeaderFields, const uint32_t aLenHeaderFields);
+    CsvWriter_t(const string &aFilePath);
 
     ~CsvWriter_t();
 

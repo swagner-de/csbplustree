@@ -28,8 +28,7 @@ CsvWriter_t::insertHeaderRow(){
     fileStream_ << endl;
 }
 
-CsvWriter_t::CsvWriter_t(const string& aFilePath, const string* aHeaderFields, const uint32_t aLenHeaderFields)
-        : headerFields_(aHeaderFields), lenHeaderFields_(aLenHeaderFields) {
+CsvWriter_t::CsvWriter_t(const string& aFilePath) {
     if (fileExists(aFilePath)){
         fileStream_.open(aFilePath, fstream::app);
     } else {

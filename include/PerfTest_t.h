@@ -41,6 +41,9 @@ private:
 
 
 public:
+    static constexpr uint64_t _SEED_KEYS =  15831164130173156251;
+    static constexpr uint64_t _SEED_TIDS =  1167110519021915224;
+
     PerfTest_t(const TestConfig_tt &aConfig);
 
     bool verifyAllRead();

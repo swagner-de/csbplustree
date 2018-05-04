@@ -30,10 +30,8 @@ template <class IndexStruc_t>
 void
 PerfTest_t<IndexStruc_t>::
 genKeysAndTids(){
-    uint64_t lSeedKey = std::chrono::system_clock::now().time_since_epoch().count();
-    std::minstd_rand0 lRandGenKey(lSeedKey);
-    uint64_t lSeedTid = std::chrono::system_clock::now().time_since_epoch().count();
-    std::minstd_rand0 lRandGenTid(lSeedTid);
+    std::minstd_rand0 lRandGenKey(_SEED_KEYS);
+    std::minstd_rand0 lRandGenTid(_SEED_TIDS);
     for (uint64_t i= 0; i< config_._numKeysToPreinsert + config_._numKeysToInsert; i++){
         keyTid_[i].first = lRandGenKey();
         keyTid_[i].second = lRandGenTid();
@@ -106,6 +104,7 @@ run(TestResult_tt& aResult){
     );
 
     cout << "verifying read values" << endl;
+    if(!verifyAllRead()) return false;
     cout << "done" << endl;
 
     aResult._sizeKeyT = sizeof(Key_t);

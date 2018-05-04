@@ -4,9 +4,9 @@
 #include <iostream>
 
 
-template <class IndexStruc_t, class Key_t, class Tid_t>
+template <class IndexStruc_t>
 void
-PerfTest_t<IndexStruc_t, Key_t, Tid_t>::
+PerfTest_t<IndexStruc_t>::
 insertK(uint64_t k){
     for (uint64_t i = numKeysInserted_; i < numKeysInserted_ + k; i++){
         idxStr_.insert(keyTid_[i]);
@@ -14,54 +14,57 @@ insertK(uint64_t k){
     numKeysInserted_ += k;
 }
 
-template <class IndexStruc_t, class Key_t, class Tid_t>
+template <class IndexStruc_t>
 void
-PerfTest_t<IndexStruc_t, Key_t, Tid_t>::
+PerfTest_t<IndexStruc_t>::
 findK(uint64_t k){
     if (k > numKeysInserted_) k = numKeysInserted_;
     for (uint64_t i = 0; i < k; i++) {
-        tidFound_[i] = idxStr_[keyTid_[i].first];
+        it lRes = idxStr_.find(keyTid_->first);
+        tidFound_[i] = lRes->second;
     }
     numKeysRead_ += k;
 }
 
-template <class IndexStruc_t, class Key_t, class Tid_t>
+template <class IndexStruc_t>
 void
-PerfTest_t<IndexStruc_t, Key_t, Tid_t>::
+PerfTest_t<IndexStruc_t>::
 genKeysAndTids(){
-    uint64_t lSeed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::minstd_rand0 lRandGen(lSeed);
+    uint64_t lSeedKey = std::chrono::system_clock::now().time_since_epoch().count();
+    std::minstd_rand0 lRandGenKey(lSeedKey);
+    uint64_t lSeedTid = std::chrono::system_clock::now().time_since_epoch().count();
+    std::minstd_rand0 lRandGenTid(lSeedTid);
     for (uint64_t i= 0; i< config_._numKeysToPreinsert + config_._numKeysToInsert; i++){
-        keyTid_[i].first = lRandGen();
-        keyTid_[i].second = lRandGen();
+        keyTid_[i].first = lRandGenKey();
+        keyTid_[i].second = lRandGenTid();
     }
 }
 
 
 
-template <class IndexStruc_t, class Key_t, class Tid_t>
+template <class IndexStruc_t>
 void
-PerfTest_t<IndexStruc_t, Key_t, Tid_t>::
+PerfTest_t<IndexStruc_t>::
 prefill(){
     insertK(config_._numKeysToPreinsert);
 }
 
-template <class IndexStruc_t, class Key_t, class Tid_t>
+template <class IndexStruc_t>
 double_t
-PerfTest_t<IndexStruc_t, Key_t, Tid_t>::
+PerfTest_t<IndexStruc_t>::
 measure(MeasureFuncPt fToMeasure, uint64_t k){
     using namespace std::chrono;
     time_point begin = high_resolution_clock::now();
     (this->*fToMeasure)(k);
     time_point end = high_resolution_clock::now();
-    duration<double_t> elapsed = end - begin;
+    duration<double_t, std::nano> elapsed(end - begin);
     return elapsed.count();
 }
 
 
 
-template <class IndexStruc_t, class Key_t, class Tid_t>
-PerfTest_t<IndexStruc_t, Key_t, Tid_t>::
+template <class IndexStruc_t>
+PerfTest_t<IndexStruc_t>::
 PerfTest_t(const TestConfig_tt& aConfig) : config_(aConfig), numKeysInserted_(0), numKeysRead_(0) {
     keyTid_ = new pair<Key_t, Tid_t>[config_._numKeysToPreinsert + config_._numKeysToInsert];
     tidFound_ = new Tid_t[config_._numKeysToPreinsert + config_._numKeysToInsert];
@@ -70,9 +73,9 @@ PerfTest_t(const TestConfig_tt& aConfig) : config_(aConfig), numKeysInserted_(0)
 
 
 
-template <class IndexStruc_t, class Key_t, class Tid_t>
+template <class IndexStruc_t>
 bool
-PerfTest_t<IndexStruc_t, Key_t, Tid_t>::
+PerfTest_t<IndexStruc_t>::
 verifyAllRead(){
     for (uint64_t i; i < numKeysInserted_; ++i){
         if (keyTid_[i].second != tidFound_[i]) return false;
@@ -80,9 +83,9 @@ verifyAllRead(){
     return true;
 }
 
-template <class IndexStruc_t, class Key_t, class Tid_t>
+template <class IndexStruc_t>
 bool
-PerfTest_t<IndexStruc_t, Key_t, Tid_t>::
+PerfTest_t<IndexStruc_t>::
 run(TestResult_tt& aResult){
     using namespace std;
 

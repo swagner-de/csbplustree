@@ -11,12 +11,15 @@
 using std::string;
 using std::pair;
 
-template <class IndexStruc_t, class Key_t, class Tid_t>
+template <class IndexStruc_t>
 class PerfTest_t {
 private:
 
-    using ThisPerfTest_t = PerfTest_t<IndexStruc_t, Key_t, Tid_t>;
+    using ThisPerfTest_t = PerfTest_t<IndexStruc_t>;
     using MeasureFuncPt = void (ThisPerfTest_t::*)(uint64_t);
+    using it = typename IndexStruc_t::iterator;
+    using Key_t = typename IndexStruc_t::key_type;
+    using Tid_t = typename IndexStruc_t::mapped_type;
 
 
     IndexStruc_t idxStr_;

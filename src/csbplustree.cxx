@@ -788,9 +788,9 @@ findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_
 };
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
-typename CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::iterator
+Tid_t*
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-find(Key_t aKey) {
+findRef(Key_t aKey) {
 
     SearchResult_tt     lSearchResult;
     Key_t *             lKeys;
@@ -831,23 +831,29 @@ find(Key_t aKey) {
     return nullptr;
 }
 
+
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+typename CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::iterator
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+find(Key_t aKey) {
+    return (iterator) findRef(aKey);
+}
+
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 int32_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 find(Key_t aKey, Tid_t* aResult) {
-    aResult = find(aKey);
+    *aResult = *findRef(aKey);
     if (aResult == nullptr) return -1;
     return 0;
 
 }
 
-
-
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 Tid_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 operator[](Key_t aKey) {
-    return *find(aKey);
+    return *findRef(aKey);
 }
 
 

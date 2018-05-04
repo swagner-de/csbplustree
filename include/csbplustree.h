@@ -36,7 +36,13 @@ class CsbTree_t{
 
 public:
 
-    using iterator = Tid_t*;
+    struct iterator_tt {
+        Tid_t   second;
+    };
+
+    using iterator = iterator_tt*;
+    using key_type = Key_t;
+    using mapped_type = Tid_t;
 
 
     CsbTree_t();
@@ -120,6 +126,7 @@ public:
 
     const uint16_t getCacheLinesPerNode();
 
+    inline Tid_t* findRef(Key_t);
     inline iterator find(Key_t);
     inline int32_t find(Key_t aKey, Tid_t* aResult);
     inline Tid_t operator [] (Key_t aKey);

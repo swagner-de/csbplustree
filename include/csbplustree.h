@@ -134,7 +134,8 @@ public:
     void remove(Key_t aKey, Tid_t aTid);
     void saveTreeAsJson(std::string aPath);
     void getMemoryUsage();
-    uint64_t countNodes(CsbInnerNode_t* aNode=(CsbInnerNode_t*) root_, uint32_t aDepth=0);
+    uint64_t countNodes();
+
     uint64_t getNumKeys();
     uint64_t getNumKeysBackwards();
     bool verifyOrder();
@@ -152,7 +153,7 @@ private:
     std::string getTreeAsJson();
     void findLeafNode(Key_t aKey, SearchResult_tt* aResult);
     void findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_t*>* aPath);
-
+    uint64_t countNodes(CsbInnerNode_t* aNode, uint32_t aDepth);
 
     static std::string kThChildrenAsJson(uint32_t aK, byte* aFirstChild, uint32_t aNodeDepth, uint32_t aTreeDepth);
     static Key_t getLargestKey(byte* aNode, bool aChild, bool aEdge);

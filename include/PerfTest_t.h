@@ -26,7 +26,7 @@ private:
     const TestConfig_tt &config_;
     uint64_t numKeysInserted_;
     uint64_t numKeysRead_;
-    pair<Key_t, Tid_t> *keyTid_;
+    pair<Key_t, Tid_t>* keyTid_;
     Tid_t *tidFound_;
 
     void insertK(uint64_t k);
@@ -41,8 +41,8 @@ private:
 
 
 public:
-    static constexpr uint64_t _SEED_KEYS =  15831164130173156251;
-    static constexpr uint64_t _SEED_TIDS =  1167110519021915224;
+    static constexpr uint64_t _SEED_KEYS =  15831164130173156251u;
+    static constexpr uint64_t _SEED_TIDS =  1167110519021915224u;
 
     PerfTest_t(const TestConfig_tt &aConfig);
 

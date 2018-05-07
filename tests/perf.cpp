@@ -9,6 +9,7 @@
 #include "../include/PerfTest_t.h"
 #include "../include/CsvWriter_t.h"
 #include "../include/csbplustree.h"
+#include "../art_src/ArtWrapper.h"
 
 using std::cout;
 using std::cerr;
@@ -29,16 +30,16 @@ using CsbTree_t_32_64_3 = CsbTree_t<uint32_t, uint64_t, 3>;
 using CsbTree_t_32_32_3 = CsbTree_t<uint32_t, uint32_t, 3>;
 using CsbTree_t_64_64_3 = CsbTree_t<uint64_t, uint64_t, 3>;
 
-
 using CsbTree_t_32_64_4 = CsbTree_t<uint32_t, uint64_t, 4>;
 using CsbTree_t_32_32_4 = CsbTree_t<uint32_t, uint32_t, 4>;
 using CsbTree_t_64_64_4 = CsbTree_t<uint64_t, uint64_t, 4>;
+
 
 template<class IdxStruc_t>
 int run_test_and_write_result(std::string aName, const TestConfig_tt& aConf, CsvWriter_t* aCsvWriter, uint32_t aCount=3){
     int lReturnCode = 0;
     for (uint32_t i=0; i < aCount; i++){
-        cout << "Commencing test " << aName << "iteration: " << i << endl;
+        cout << "Commencing test " << aName << " iteration: " << i << endl;
         PerfTest_t<IdxStruc_t> lPTest(aConf);
         TestResult_tt lResult = {};
         lResult._name = aName;
@@ -69,12 +70,14 @@ int run_config(const TestConfig_tt& aConf, CsvWriter_t* aCsvWriter, uint32_t aAv
     run_test_and_write_result<CsbTree_t_32_64_3>("CsbTree_t_32_64_3", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_32_64_3>("CsbTree_t_32_64_4", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<std::map<uint32_t , uint64_t >>("map_32_64", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<ArtWrapper_t<uint32_t , uint64_t >>("art_32_64", aConf, aCsvWriter, aAverageCount);
 
     run_test_and_write_result<CsbTree_t_64_64_1>("CsbTree_t_64_64_1", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_64_64_2>("CsbTree_t_64_64_2", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_64_64_3>("CsbTree_t_64_64_3", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_64_64_3>("CsbTree_t_64_64_4", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<std::map<uint64_t , uint64_t >>("map_64_64", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<ArtWrapper_t<uint64_t , uint64_t >>("art_64_64", aConf, aCsvWriter, aAverageCount);
 
 
     return 0;

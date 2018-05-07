@@ -20,10 +20,10 @@ PerfTest_t<IndexStruc_t>::
 findK(uint64_t k){
     if (k > numKeysInserted_) k = numKeysInserted_;
     for (uint64_t i = 0; i < k; i++) {
-        it lRes = idxStr_.find(keyTid_->first);
+        it lRes = idxStr_.find(keyTid_[i].first);
         tidFound_[i] = lRes->second;
     }
-    numKeysRead_ += k;
+    numKeysRead_ = k;
 }
 
 template <class IndexStruc_t>
@@ -75,8 +75,10 @@ template <class IndexStruc_t>
 bool
 PerfTest_t<IndexStruc_t>::
 verifyAllRead(){
-    for (uint64_t i; i < numKeysInserted_; ++i){
-        if (keyTid_[i].second != tidFound_[i]) return false;
+    for (uint64_t i=0; i < numKeysRead_; ++i){
+        if (keyTid_[i].second != tidFound_[i]){
+            return false;
+        };
     }
     return true;
 }

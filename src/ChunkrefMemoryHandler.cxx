@@ -222,7 +222,7 @@ bestFit(uint32_t aSize) {
     while (lCurrent != nullptr && this->contains(lCurrent)) {
         int32_t lRemainingSize = lCurrent->size_ - aSize;
         if (lRemainingSize >= 0 &&
-            lRemainingSize < lBestFitting._remainingSize) {
+                (uint32_t)lRemainingSize < lBestFitting._remainingSize) {
             lBestFitting._remainingSize = lRemainingSize;
             lBestFitting._self = lCurrent;
             lBestFitting._previousChunkNextFree = lPreviousChunkNextFree;

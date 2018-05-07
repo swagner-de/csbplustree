@@ -39,7 +39,10 @@ template<class IdxStruc_t>
 int run_test_and_write_result(std::string aName, const TestConfig_tt& aConf, CsvWriter_t* aCsvWriter, uint32_t aCount=3){
     int lReturnCode = 0;
     for (uint32_t i=0; i < aCount; i++){
-        cout << "Commencing test " << aName << " iteration: " << i << endl;
+        cout << "Commencing test " <<
+             aName << "with " << sizeof(typename IdxStruc_t::key_type) << " bytes key types and " << sizeof(typename IdxStruc_t::mapped_type)
+                << " bytes mapped types; "
+             << " iteration: " << i << endl;
         PerfTest_t<IdxStruc_t> lPTest(aConf);
         TestResult_tt lResult = {};
         lResult._name = aName;
@@ -59,25 +62,25 @@ int run_test_and_write_result(std::string aName, const TestConfig_tt& aConf, Csv
 
 int run_config(const TestConfig_tt& aConf, CsvWriter_t* aCsvWriter, uint32_t aAverageCount){
 
-    run_test_and_write_result<CsbTree_t_32_32_1>("CsbTree_t_32_32_1", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<CsbTree_t_32_32_2>("CsbTree_t_32_32_2", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<CsbTree_t_32_32_3>("CsbTree_t_32_32_3", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<CsbTree_t_32_32_3>("CsbTree_t_32_32_4", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<std::map<uint32_t , uint32_t >>("map_32_32", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<CsbTree_t_32_32_1>("CsbTree_t_1", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<CsbTree_t_32_32_2>("CsbTree_t_2", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<CsbTree_t_32_32_3>("CsbTree_t_3", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<CsbTree_t_32_32_3>("CsbTree_t_4", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<std::map<uint32_t , uint32_t >>("map", aConf, aCsvWriter, aAverageCount);
 
-    run_test_and_write_result<CsbTree_t_32_64_1>("CsbTree_t_32_64_1", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<CsbTree_t_32_64_2>("CsbTree_t_32_64_2", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<CsbTree_t_32_64_3>("CsbTree_t_32_64_3", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<CsbTree_t_32_64_3>("CsbTree_t_32_64_4", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<std::map<uint32_t , uint64_t >>("map_32_64", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<ArtWrapper_t<uint32_t , uint64_t >>("art_32_64", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<CsbTree_t_32_64_1>("CsbTree_t_1", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<CsbTree_t_32_64_2>("CsbTree_t_2", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<CsbTree_t_32_64_3>("CsbTree_t_3", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<CsbTree_t_32_64_3>("CsbTree_t_4", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<std::map<uint32_t , uint64_t >>("map", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<ArtWrapper_t<uint32_t , uint64_t >>("art", aConf, aCsvWriter, aAverageCount);
 
-    run_test_and_write_result<CsbTree_t_64_64_1>("CsbTree_t_64_64_1", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<CsbTree_t_64_64_2>("CsbTree_t_64_64_2", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<CsbTree_t_64_64_3>("CsbTree_t_64_64_3", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<CsbTree_t_64_64_3>("CsbTree_t_64_64_4", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<std::map<uint64_t , uint64_t >>("map_64_64", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<ArtWrapper_t<uint64_t , uint64_t >>("art_64_64", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<CsbTree_t_64_64_1>("CsbTree_t_1", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<CsbTree_t_64_64_2>("CsbTree_t_2", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<CsbTree_t_64_64_3>("CsbTree_t_3", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<CsbTree_t_64_64_3>("CsbTree_t_4", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<std::map<uint64_t , uint64_t >>("map", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<ArtWrapper_t<uint64_t , uint64_t >>("art", aConf, aCsvWriter, aAverageCount);
 
 
     return 0;

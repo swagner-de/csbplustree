@@ -14,7 +14,7 @@ class CsbTree_t{
     static constexpr uint32_t       kSizeNode = kSizeCacheLine * kNumCacheLinesPerNode;
 
 
-    static constexpr uint16_t       kSizeFixedInnerNode = 10;
+    static constexpr uint16_t       kSizeFixedInnerNode = 2 + sizeof(void*);
     static constexpr uint16_t       kNumMaxKeysInnerNode = (kSizeNode - kSizeFixedInnerNode) / sizeof(Key_t);
     static constexpr uint16_t       kSizePaddingInnerNode = kSizeNode - (kNumMaxKeysInnerNode * sizeof(Key_t) + kSizeFixedInnerNode);
 
@@ -22,7 +22,7 @@ class CsbTree_t{
     static constexpr uint16_t       kNumMaxKeysLeafNode = (kSizeNode - kSizeFixedLeafNode) / (sizeof(Key_t) + sizeof(Tid_t));
     static constexpr uint16_t       kSizePaddingLeafNode = kSizeNode - (kNumMaxKeysLeafNode * (sizeof(Tid_t) + sizeof(Key_t)) + kSizeFixedLeafNode);
 
-    static constexpr uint16_t       kSizeFixedLeafEdgeNode = 18;
+    static constexpr uint16_t       kSizeFixedLeafEdgeNode = 2 + 2 * sizeof(void*);
     static constexpr uint16_t       kNumMaxKeysLeafEdgeNode = (kSizeNode - kSizeFixedLeafEdgeNode) / (sizeof(Key_t) + sizeof(Tid_t));
     static constexpr uint16_t       kSizePaddingLeafEdgeNode = kSizeNode - (kNumMaxKeysLeafEdgeNode * (sizeof(Tid_t) + sizeof(Key_t)) + kSizeFixedLeafEdgeNode);
 

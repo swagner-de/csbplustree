@@ -985,6 +985,19 @@ getNumKeysBackwards() {
     return lNumKeysTotal;
 }
 
+template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
+uint64_t
+CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
+countNodes(CsbInnerNode_t* aNode, uint32_t aDepth) {
+    if (aDepth == depth_)
+        return kNumMaxKeysInnerNode;
+    uint64_t lNumNodes = kNumMaxKeysInnerNode;
+    for (uint16_t i; i < aNode->numKeys_;i++){
+        lNumNodes += countInnerNodes((CsbInnerNode_t*) getKthNode(i, aNode->children_), aDepth +1);
+    }
+    return lNumNodes;
+}
+
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 bool

@@ -134,6 +134,7 @@ public:
     void remove(Key_t aKey, Tid_t aTid);
     void saveTreeAsJson(std::string aPath);
     void getMemoryUsage();
+    uint64_t countNodes(CsbInnerNode_t* aNode=(CsbInnerNode_t*) root_, uint32_t aDepth=0);
     uint64_t getNumKeys();
     uint64_t getNumKeysBackwards();
     bool verifyOrder();

@@ -125,7 +125,6 @@ public:
 
 
     const uint16_t getCacheLinesPerNode();
-
     inline Tid_t* findRef(Key_t);
     inline iterator find(Key_t);
     inline int32_t find(Key_t aKey, Tid_t* aResult);

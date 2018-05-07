@@ -140,7 +140,7 @@ CsbLeafNode_t() : numKeys_(0) {}
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafEdgeNode_t::
-CsbLeafEdgeNode_t() : following_(NULL), previous_(NULL), numKeys_(0) {}
+CsbLeafEdgeNode_t() : numKeys_(0), previous_(NULL), following_(NULL) {}
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void

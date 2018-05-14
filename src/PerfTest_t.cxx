@@ -69,6 +69,12 @@ PerfTest_t(const TestConfig_tt& aConfig) : config_(aConfig), numKeysInserted_(0)
     genKeysAndTids();
 };
 
+template <class IndexStruc_t>
+PerfTest_t<IndexStruc_t>::
+~PerfTest_t(){
+    delete[] keyTid_;
+    delete[] tidFound_;
+}
 
 
 template <class IndexStruc_t>

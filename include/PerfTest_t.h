@@ -45,6 +45,7 @@ public:
     static constexpr uint64_t _SEED_TIDS =  1167110519021915224u;
 
     PerfTest_t(const TestConfig_tt &aConfig);
+    ~PerfTest_t();
 
     bool verifyAllRead();
 

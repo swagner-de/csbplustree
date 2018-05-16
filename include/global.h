@@ -7,7 +7,7 @@
 #if __cpp_lib_byte
     #define ptr_t std::byte
 #else
-    #define ptr_t void
+    #define ptr_t char
 #endif
 
 using byte = ptr_t;

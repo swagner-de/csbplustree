@@ -1,12 +1,13 @@
 #ifndef CSBPLUSTREE_CSBPLUSTREE_H
 #define CSBPLUSTREE_CSBPLUSTREE_H
 
-#include "ChunkrefMemoryHandler.h"
+
 #include <cstddef>
 #include <stack>
 
+#include "global.h"
+#include "ChunkrefMemoryHandler.h"
 
-typedef typename std::byte byte;
 template <class Key_t, class Tid_t, uint16_t kNumCacheLinesPerNode>
 class CsbTree_t{
     private:
@@ -30,15 +31,15 @@ class CsbTree_t{
 
     typedef typename ChunkRefMemoryHandler::MemoryHandler_t<kSizeMemoryChunk, kSizeCacheLine, 1> TreeMemoryManager_t;
 
+    struct iterator_tt {
+        Tid_t   second;
+    };
+
     byte* root_;
     TreeMemoryManager_t* tmm_;
     uint32_t depth_;
 
 public:
-
-    struct iterator_tt {
-        Tid_t   second;
-    };
 
     using iterator = iterator_tt*;
     using key_type = Key_t;

@@ -1,14 +1,10 @@
 #ifndef CSBPLUSTREE_CHUNKREFMEMORYHANDLER_H
 #define CSBPLUSTREE_CHUNKREFMEMORYHANDLER_H
 
-#include <cstdint>
 #include <vector>
-#include <cstddef>
 #include <exception>
 
-
-
-typedef std::byte byte;
+#include "global.h"
 
 
 namespace ChunkRefMemoryHandler {

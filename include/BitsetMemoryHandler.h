@@ -1,12 +1,11 @@
 #ifndef CSBPLUSTREE_MEMORYHANDLER_H
 #define CSBPLUSTREE_MEMORYHANDLER_H
 
-#include <stdint.h>
 #include <vector>
 #include <bitset>
 #include <stdio.h>
-#include <cstddef>
 
+#include "global.h"
 
 namespace BitSetMemoryHandler {
 

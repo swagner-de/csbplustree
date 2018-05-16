@@ -15,11 +15,11 @@ CsbTree_t() : depth_(0) {
     root_ = tmm_->getMem(kNumMaxKeysInnerNode *kSizeNode);
     new(root_) CsbLeafEdgeNode_t;
     ((CsbLeafNode_t*) getKthNode(1, root_))->numKeys_ = 0; // stop marker
-    static_assert(kSizeNode == sizeof(CsbInnerNode_t));
-    static_assert(kSizeNode == sizeof(CsbLeafNode_t));
-    static_assert(kSizeNode == sizeof(CsbLeafEdgeNode_t));
-    static_assert(kNumMaxKeysLeafEdgeNode > 0);
-    static_assert(kNumMaxKeysLeafNode >= (kNumMaxKeysLeafEdgeNode / 2));
+    static_assert(kSizeNode == sizeof(CsbInnerNode_t), "CsbInnerNode size incorrect");
+    static_assert(kSizeNode == sizeof(CsbLeafNode_t), "CsbLeafNode size incorrect");
+    static_assert(kSizeNode == sizeof(CsbLeafEdgeNode_t), "CsbLeafEdgeNode size incorrect");
+    static_assert(kNumMaxKeysLeafEdgeNode > 0, "CsbLeafNode has no space for keys");
+    static_assert(kNumMaxKeysLeafNode >= (kNumMaxKeysLeafEdgeNode / 2), "CsbLeafNode cannot catch half of the keys of a CsbLeafEdge");
     // TODO assert that a InnerNode has space for 2 more nodes after a split
 }
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>

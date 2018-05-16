@@ -52,9 +52,9 @@ double_t
 PerfTest_t<IndexStruc_t>::
 measure(MeasureFuncPt fToMeasure, uint64_t k){
     using namespace std::chrono;
-    time_point begin = high_resolution_clock::now();
+    time_point<high_resolution_clock> begin = high_resolution_clock::now();
     (this->*fToMeasure)(k);
-    time_point end = high_resolution_clock::now();
+    time_point<high_resolution_clock> end = high_resolution_clock::now();
     duration<double_t, std::nano> elapsed(end - begin);
     return elapsed.count();
 }

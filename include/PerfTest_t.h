@@ -8,6 +8,9 @@
 #include "TestResult_tt.h"
 #include "TestConfig_tt.h"
 
+#define _SEED_KEYS 15831164130173156251ul
+#define _SEED_TIDS 1167110519021915224ul
+
 using std::string;
 using std::pair;
 
@@ -41,8 +44,6 @@ private:
 
 
 public:
-    static constexpr uint64_t _SEED_KEYS =  15831164130173156251u;
-    static constexpr uint64_t _SEED_TIDS =  1167110519021915224u;
 
     PerfTest_t(const TestConfig_tt &aConfig);
     ~PerfTest_t();

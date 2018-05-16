@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     if (argc < 3) {
         cout
                 << "Usage:" << endl
-                << argv[0] << " <csvpath> <# iterations>";
+                << argv[0] << " <csvpath> <# iterations>" << endl;
         return 1;
     }
 

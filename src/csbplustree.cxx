@@ -15,9 +15,9 @@ CsbTree_t() : depth_(0) {
     root_ = tmm_->getMem(kNumMaxKeysInnerNode *kSizeNode);
     new(root_) CsbLeafEdgeNode_t;
     ((CsbLeafNode_t*) getKthNode(1, root_))->numKeys_ = 0; // stop marker
-    static_assert(kSizeNode == sizeof(CsbInnerNode_t));
-    static_assert(kSizeNode == sizeof(CsbLeafNode_t));
-    static_assert(kSizeNode == sizeof(CsbLeafEdgeNode_t));
+    static_assert(kSizeNode == sizeof(CsbLeafEdgeNode_t), "problem with kSizeNode");
+    static_assert(kNumMaxKeysLeafEdgeNode > 0, "problem with kNumMaxKeysLeafEdgeNode");
+    static_assert(kNumMaxKeysLeafNode >= (kNumMaxKeysLeafEdgeNode / 2), "problem with kNumMaxKeysLeafNode");
     static_assert(kNumMaxKeysLeafEdgeNode > 0);
     static_assert(kNumMaxKeysLeafNode >= (kNumMaxKeysLeafEdgeNode / 2));
     // TODO assert that a InnerNode has space for 2 more nodes after a split

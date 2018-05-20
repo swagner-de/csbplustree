@@ -49,7 +49,7 @@ T
 FatStack_t<T, kNumMax>::
 top() {
     if (sizeCurrent_ == 0){
-        return NULL;
+        throw EmptyStackException();
     }
     return *currentHead();
 }

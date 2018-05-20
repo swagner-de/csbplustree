@@ -1,14 +1,21 @@
 #ifndef FATSTACK_T_H
 #define FATSTACK_T_H
 
-
+#include <exception>
 #include <cstdint>
+
 #include "ChunkrefMemoryHandler.h"
 
 template <class T, uint32_t kNumMax=16384>
 class FatStack_t{
 
 public:
+
+    class EmptyStackException: public std::exception {
+        virtual const char *what() const throw() {
+            return "Stack is empty";
+        }
+    };
 
     using StackMemoryHandler_t = ChunkRefMemoryHandler::MemoryHandler_t<sizeof(T) * kNumMax, 64, true>;
 

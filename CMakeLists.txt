@@ -13,6 +13,9 @@ add_library(csvwriter src/CsvWriter_t.cxx)
 add_library(art art_src/art.c)
 target_link_libraries(perf_test csvwriter art)
 
+
+add_executable(test_FatStack tests/FatStack.cpp)
+
 find_package(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
 ADD_DEFINITIONS(-DBOOST_TEST_DYN_LINK)
 add_executable(test_ChunkrefMemoryHandler tests/ChunkrefMemoryHandler.cpp)

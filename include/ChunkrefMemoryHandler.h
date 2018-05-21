@@ -68,7 +68,7 @@ namespace ChunkRefMemoryHandler {
         UnusedMemorySubchunk_t *firstFree_;
         uint32_t size_;
 
-        inline uint16_t roundUp(uint32_t aSize);
+        inline uint32_t roundUp(uint32_t aSize);
         byte *firstFit(uint32_t aSize);
         byte *bestFit(uint32_t aSize);
     };

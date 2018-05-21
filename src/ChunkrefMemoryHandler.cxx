@@ -85,9 +85,12 @@ template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 void
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 release(byte *aStartAddr, uint32_t aSize) {
-if (firstFree_ == nullptr) {
-    firstFree_ = new (aStartAddr) UnusedMemorySubchunk_t(aSize);
-    return;
+
+    if (aSize == 0) return;
+
+    if (firstFree_ == nullptr) {
+        firstFree_ = new (aStartAddr) UnusedMemorySubchunk_t(aSize);
+        return;
     }
 
     UnusedMemorySubchunk_t *lPreviousChunk = firstFree_;

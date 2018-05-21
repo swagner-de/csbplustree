@@ -36,10 +36,6 @@ pop() {
     if (sizeCurrent_ == 0){
         return;
     }
-    if (sizeCurrent_ == 1){
-        sizeCurrent_ = 0;
-        return;
-    }
     --sizeCurrent_;
 }
 

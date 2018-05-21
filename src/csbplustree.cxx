@@ -12,7 +12,8 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbTree_t() : depth_(0) {
     tmm_ = new TreeMemoryManager_t;
-    root_ = tmm_->getMem(kNumMaxKeysInnerNode *kSizeNode);
+    smm_ = new typename Stack_t<CsbInnerNode_t *>::StackMemoryManager_t;
+    root_ = tmm_->getMem(kNumMaxKeysInnerNode * kSizeNode);
     new(root_) CsbLeafEdgeNode_t;
     ((CsbLeafNode_t*) getKthNode(1, root_))->numKeys_ = 0; // stop marker
     static_assert(kSizeNode == sizeof(CsbInnerNode_t), "CsbInnerNode size incorrect");
@@ -26,6 +27,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 ~CsbTree_t() {
     delete tmm_;
+    delete smm_;
 }
 
 
@@ -253,7 +255,8 @@ CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 insert(Key_t aKey, Tid_t aTid) {
 
     // find the leaf node to insert the key to and record the path upwards the tree
-    std::stack<CsbInnerNode_t*>         lPath;
+    //Stack_t<CsbInnerNode_t*>            lPath;
+    Stack_t<CsbInnerNode_t*>            lPath(depth_, smm_);
     byte*                               lPtrNodeLeaf;
     SearchResult_tt                     lSearchResult;
     bool                                lIsLeafEdge;
@@ -431,7 +434,7 @@ toLeafEdge() {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-split(byte* aNodeToSplit, uint32_t aDepth,  std::stack<CsbInnerNode_t*>* aPath, SplitResult_tt* aResult){
+split(byte* aNodeToSplit, uint32_t aDepth,  Stack_t <CsbInnerNode_t*>* aPath, SplitResult_tt* aResult){
 
 
     CsbInnerNode_t* lNodeParent;
@@ -763,7 +766,7 @@ findLeafNode(Key_t aKey, SearchResult_tt* aResult) {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_t*>* aPath) {
+findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, Stack_t<CsbInnerNode_t*>* aPath) {
 
 
     uint16_t            lIdxToDescend;

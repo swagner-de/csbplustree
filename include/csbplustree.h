@@ -11,7 +11,6 @@
 template <class Key_t, class Tid_t, uint16_t kNumCacheLinesPerNode>
 class CsbTree_t{
     private:
-    static constexpr uint16_t       kSizeCacheLine = 64;
     static constexpr uint32_t       kSizeNode = kSizeCacheLine * kNumCacheLinesPerNode;
 
 
@@ -29,7 +28,7 @@ class CsbTree_t{
 
     static constexpr uint32_t       kSizeMemoryChunk = kSizeNode * kNumMaxKeysInnerNode * 10000;
 
-    typedef typename ChunkRefMemoryHandler::MemoryHandler_t<kSizeMemoryChunk, kSizeCacheLine, 1> TreeMemoryManager_t;
+    typedef typename ChunkRefMemoryHandler::MemoryHandler_t<kSizeMemoryChunk, kSizeCacheLine, true> TreeMemoryManager_t;
 
     struct iterator_tt {
         Tid_t   second;
@@ -149,11 +148,13 @@ private:
         bool        _edgeIndicator;
     };
 
-    void split(byte* aNodeToSplit, uint32_t aDepth, std::stack<CsbInnerNode_t*>* aPath, SplitResult_tt* aResult);
+    typename Stack_t<CsbInnerNode_t*>::StackMemoryManager_t*  smm_;
+
+    void split(byte* aNodeToSplit, uint32_t aDepth, Stack_t<CsbInnerNode_t*>* aPath, SplitResult_tt* aResult);
     inline bool isLeaf(uint32_t aDepth);
     std::string getTreeAsJson();
     void findLeafNode(Key_t aKey, SearchResult_tt* aResult);
-    void findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, std::stack<CsbInnerNode_t*>* aPath);
+    void findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, Stack_t<CsbInnerNode_t*>* aPath);
     uint64_t countNodes(CsbInnerNode_t* aNode, uint32_t aDepth);
 
     static std::string kThChildrenAsJson(uint32_t aK, byte* aFirstChild, uint32_t aNodeDepth, uint32_t aTreeDepth);

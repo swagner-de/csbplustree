@@ -29,6 +29,7 @@ namespace ChunkRefMemoryHandler {
 
     struct MemUsageStats_t{
         uint32_t _numChunksAlloc;
+        uint32_t _totalBytesAlloc;
         uint32_t _bytesFree;
     };
 
@@ -47,10 +48,13 @@ namespace ChunkRefMemoryHandler {
     template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
     class MemoryChunk_t {
     public:
-        MemoryChunk_t();
+
+
+        MemoryChunk_t(uint32_t aSize=kSizeChunk);
 
         void freeChunk();
         uint32_t getBytesAllocated();
+        inline uint32_t getSize();
         byte *getMem(uint32_t aSize, bool aZeroed=false);
         bool verify();
         void release(byte *aStartAddr, uint32_t aSize);
@@ -62,6 +66,7 @@ namespace ChunkRefMemoryHandler {
     private:
         byte *begin_;
         UnusedMemorySubchunk_t *firstFree_;
+        uint32_t size_;
 
         inline uint16_t roundUp(uint32_t aSize);
         byte *firstFit(uint32_t aSize);

@@ -18,12 +18,13 @@ deliver() {
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
-MemoryChunk_t() {
-    if (posix_memalign((void **) &this->begin_, kSizeCacheLine, kSizeChunk)) {
+MemoryChunk_t(uint32_t aSize) {
+    if (posix_memalign((void **) &this->begin_, kSizeCacheLine, aSize)) {
         throw MemAllocFailedException();
     }
-    new(begin_) UnusedMemorySubchunk_t(kSizeChunk);
+    new(begin_) UnusedMemorySubchunk_t(aSize);
     firstFree_ = (UnusedMemorySubchunk_t *) begin_;
+    size_= aSize;
 }
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
@@ -37,13 +38,20 @@ template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 uint32_t
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 getBytesAllocated(){
-    uint32_t lSumAllocated = kSizeChunk;
+    uint32_t lSumAllocated = size_;
     UnusedMemorySubchunk_t* lCurrent = firstFree_;
     while (lCurrent != nullptr) {
         lSumAllocated -= lCurrent->size_;
         lCurrent = lCurrent->nextFree_;
     }
     return lSumAllocated;
+}
+
+template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
+uint32_t
+MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
+getSize() {
+    return size_;
 }
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
@@ -153,14 +161,14 @@ MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 contains(byte *aAddr) {
     return ((begin_ <= aAddr)
             &&
-            (begin_ + kSizeChunk > aAddr));
+            (begin_ + size_ > aAddr));
 }
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 bool
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 isFullyUnallocated() {
-    return (this->firstFree_->size_ == kSizeChunk);
+    return (this->firstFree_->size_ == this->size_);
 }
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
@@ -267,17 +275,17 @@ template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 byte*
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 getMem(uint32_t aSize, bool aZeroed) {
-    if (aSize > kSizeChunk){
-        throw MemAllocTooLarge();
-    }
     byte *lFreeMem = nullptr;
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
+        if (aSize > lIt->getSize()){
+            continue;
+        }
         lFreeMem = lIt->getMem(aSize, aZeroed);
         if (lFreeMem != nullptr) {
             return lFreeMem;
         }
     }
-    chunks_.push_back(ThisMemoryChunk_t());
+    chunks_.push_back(ThisMemoryChunk_t((aSize < kSizeChunk) ? kSizeChunk : aSize));
     return chunks_.back().getMem(aSize);
 }
 
@@ -287,8 +295,8 @@ MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 verifyPointers(){
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
         if (!lIt->verify()) return false;
-        return true;
     }
+    return true;
 }
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
@@ -299,6 +307,10 @@ release(byte *aStartAddr, uint32_t aSize) {
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
         if (lIt->contains(aStartAddr)) {
             lIt->release(aStartAddr, aSize);
+            if (lIt->isFullyUnallocated() && chunks_.size() > 1){
+                lIt->freeChunk();
+                chunks_.erase(lIt);
+            }
             return;
         }
     }
@@ -320,9 +332,11 @@ void
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 getUsage(MemUsageStats_t &aResult) {
     aResult._numChunksAlloc = this->chunks_.size();
+    aResult._totalBytesAlloc = 0;
     aResult._bytesFree = 0;
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
         aResult._bytesFree += lIt->getFree();
+        aResult._totalBytesAlloc += lIt->getSize();
     }
 
 }
@@ -334,10 +348,9 @@ printUsage() {
     MemUsageStats_t lMemStats;
     this->getUsage(lMemStats);
 
-
     std::cout << " --- Memory Usage --- " << std::endl;
     std::cout << " Chunks allocated: " << lMemStats._numChunksAlloc << std::endl;
-    std::cout << " Memory allocated: " << (lMemStats._numChunksAlloc * kSizeChunk) / 1024 << std::endl;
+    std::cout << " Memory allocated: " << lMemStats._totalBytesAlloc / 1024 << std::endl;
     std::cout << " Free            : " << lMemStats._bytesFree / 1024 << std::endl;
 }
 

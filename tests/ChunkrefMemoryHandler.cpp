@@ -159,7 +159,8 @@ BOOST_AUTO_TEST_SUITE(MemoryHandler)
                 first > someMemChunk1 || first + 12800 < someMemChunk1
         );
 
-        memoryHandler.getMem(13000);
+        byte* largeMemory = memoryHandler.getMem(16384);
+        memoryHandler.release(largeMemory, 16384);
 
     }
     BOOST_AUTO_TEST_SUITE_END()

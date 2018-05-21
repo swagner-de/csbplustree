@@ -189,7 +189,7 @@ firstFit(uint32_t aSize) {
     UnusedMemorySubchunk_t *lRemaining;
     while (lCurrent != nullptr && this->contains(lCurrent)) {
 
-        int16_t lRemainingSize = lCurrent->size_ - aSize;
+        int32_t lRemainingSize = lCurrent->size_ - aSize;
 
         if (lRemainingSize >= 0) {
             // if remaining memory is larger than the requested create a new UnusedMemorySubchunk

@@ -39,10 +39,10 @@ template<class IdxStruc_t>
 int run_test_and_write_result(std::string aName, const TestConfig_tt& aConf, CsvWriter_t* aCsvWriter, uint32_t aCount=3){
     int lReturnCode = 0;
     for (uint32_t i=0; i < aCount; i++){
-        cout << "Commencing test " <<
-             aName << "with " << sizeof(typename IdxStruc_t::key_type) << " bytes key types and " << sizeof(typename IdxStruc_t::mapped_type)
-                << " bytes mapped types; "
-             << " iteration: " << i << endl;
+        cout << "Test: " << aName
+             << " | key_type: " << sizeof(typename IdxStruc_t::key_type) << " bytes"
+             << " | mapped_type: " << sizeof(typename IdxStruc_t::mapped_type) << " bytes"
+             << " | iteration: " << i << endl;
         PerfTest_t<IdxStruc_t> lPTest(aConf);
         TestResult_tt lResult = {};
         lResult._name = aName;

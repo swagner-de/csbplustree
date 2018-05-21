@@ -17,9 +17,9 @@ public:
         }
     };
 
-    using StackMemoryHandler_t = ChunkRefMemoryHandler::MemoryHandler_t<sizeof(T) * kNumMax, 64, true>;
+    using StackMemoryManager_t = ChunkRefMemoryHandler::MemoryHandler_t<sizeof(T) * kNumMax, 64, true>;
 
-    FatStack_t(uint32_t aSizeMin, StackMemoryHandler_t* aMemoryHandler);
+    FatStack_t(uint32_t aSizeMin, StackMemoryManager_t* aMemoryHandler);
 
     ~FatStack_t();
 
@@ -33,7 +33,7 @@ public:
 private:
 
 
-    StackMemoryHandler_t* memoryHandler_;
+    StackMemoryManager_t* memoryHandler_;
     uint32_t sizeCurrent_;
     uint32_t sizeAllocated_;
     T* items_;

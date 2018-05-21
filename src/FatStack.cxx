@@ -3,7 +3,7 @@
 
 template <class T, uint32_t kNumMax>
 FatStack_t<T, kNumMax>::
-FatStack_t(uint32_t aSizeMin, StackMemoryHandler_t *aMemoryHandler)
+FatStack_t(uint32_t aSizeMin, StackMemoryManager_t *aMemoryHandler)
         : memoryHandler_(aMemoryHandler), sizeCurrent_(0), sizeAllocated_(aSizeMin)
 {
     items_ = (T*) memoryHandler_->getMem(aSizeMin * sizeof(T));

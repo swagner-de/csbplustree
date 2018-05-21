@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE ChunkrefMemHandler
 
 #include <boost/test/unit_test.hpp>
-#include "../lib/ChunkrefMemoryHandler.h"
+#include "../include/ChunkrefMemoryHandler.h"
 
 BOOST_AUTO_TEST_SUITE(MemoryHandler)
 
@@ -158,6 +158,8 @@ BOOST_AUTO_TEST_SUITE(MemoryHandler)
         BOOST_CHECK(
                 first > someMemChunk1 || first + 12800 < someMemChunk1
         );
+
+        memoryHandler.getMem(13000);
 
     }
     BOOST_AUTO_TEST_SUITE_END()

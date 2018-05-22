@@ -767,7 +767,7 @@ CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, Stack_t<CsbInnerNode_t*>* aPath) {
 
 
-    uint16_t            lIdxToDescend;
+    uint16_t            lIdxToDescend= 0;
     uint32_t            lLevel       = 0;
     CsbInnerNode_t*     lNodeCurrent = (CsbInnerNode_t*) this->root_;
 

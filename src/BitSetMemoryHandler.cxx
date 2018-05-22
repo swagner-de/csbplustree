@@ -11,7 +11,7 @@ MemoryChunk_t() {
 }
 
 
-template<uint32_t kNodeSize, uint32_t kSizeCacheLine, uint32_t kNumNodesPerChpunk>
+template<uint32_t kNodeSize, uint32_t kSizeCacheLine, uint32_t kNumNodesPerChunk>
 void
 MemoryHandler_t<kNodeSize, kSizeCacheLine, kNumNodesPerChunk>::MemoryChunk_t::
 freeChunk() {

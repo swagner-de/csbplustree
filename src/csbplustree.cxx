@@ -12,7 +12,6 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbTree_t() : depth_(0) {
     tmm_ = new TreeMemoryManager_t;
-    smm_ = new typename Stack_t<CsbInnerNode_t *>::StackMemoryManager_t;
     root_ = tmm_->getMem(kNumMaxKeysInnerNode * kSizeNode);
     new(root_) CsbLeafEdgeNode_t;
     ((CsbLeafNode_t*) getKthNode(1, root_))->numKeys_ = 0; // stop marker
@@ -27,7 +26,6 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 ~CsbTree_t() {
     delete tmm_;
-    delete smm_;
 }
 
 
@@ -256,7 +254,7 @@ insert(Key_t aKey, Tid_t aTid) {
 
     // find the leaf node to insert the key to and record the path upwards the tree
     //Stack_t<CsbInnerNode_t*>            lPath;
-    Stack_t<CsbInnerNode_t*>            lPath(depth_, smm_);
+    Stack_t<CsbInnerNode_t*>            lPath(depth_);
     byte*                               lPtrNodeLeaf;
     SearchResult_tt                     lSearchResult;
     bool                                lIsLeafEdge;

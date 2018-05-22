@@ -20,6 +20,4 @@ using byte = ptr_t;
 
 static constexpr uint16_t       kSizeCacheLine = 64;
 
-template <class T> using Stack_t = FatStack_t<T>;
-
 #endif //CSBPLUSTREE_GLOBAL_H

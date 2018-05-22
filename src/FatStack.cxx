@@ -3,16 +3,16 @@
 
 template <class T, uint32_t kNumMax>
 FatStack_t<T, kNumMax>::
-FatStack_t(uint32_t aSizeMin, StackMemoryManager_t *aMemoryHandler)
-        : memoryHandler_(aMemoryHandler), sizeCurrent_(0), sizeAllocated_(aSizeMin)
+FatStack_t(uint32_t aSizeMin)
+        : sizeCurrent_(0), sizeAllocated_(aSizeMin)
 {
-    items_ = (T*) memoryHandler_->getMem(aSizeMin * sizeof(T));
+    items_ = new T[aSizeMin];
 }
 
 template <class T, uint32_t kNumMax>
 FatStack_t<T, kNumMax>::
 ~FatStack_t() {
-    memoryHandler_->release((byte*) items_, sizeAllocated_ * sizeof(T));
+   delete[] items_;
 }
 
 
@@ -71,14 +71,14 @@ void
 FatStack_t<T, kNumMax>::
 reallocate()  {
     uint32_t lSizeNewAlloc = (uint64_t) (sizeAllocated_ * 1.5);
-    T* lNewItemsPtr = (T*) memoryHandler_->getMem(lSizeNewAlloc * sizeof(T));
+    T* lNewItemsPtr = new T[lSizeNewAlloc];
     memmove(
             lNewItemsPtr,
             items_,
             sizeCurrent_ * sizeof(T)
     );
     sizeAllocated_ = lSizeNewAlloc;
-    memoryHandler_->release((byte* )items_, sizeCurrent_ * sizeof(T));
+    delete[] items_;
     items_ = lNewItemsPtr;
 }
 

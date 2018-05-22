@@ -6,6 +6,8 @@
 
 #include "ChunkrefMemoryHandler.h"
 
+
+
 template <class T, uint32_t kNumMax=16384>
 class FatStack_t{
 
@@ -17,9 +19,8 @@ public:
         }
     };
 
-    using StackMemoryManager_t = ChunkRefMemoryHandler::MemoryHandler_t<sizeof(T) * kNumMax, 64, true>;
 
-    FatStack_t(uint32_t aSizeMin, StackMemoryManager_t* aMemoryHandler);
+    FatStack_t(uint32_t aSizeMin);
 
     ~FatStack_t();
 
@@ -32,8 +33,6 @@ public:
 
 private:
 
-
-    StackMemoryManager_t* memoryHandler_;
     uint32_t sizeCurrent_;
     uint32_t sizeAllocated_;
     T* items_;
@@ -41,6 +40,9 @@ private:
     void reallocate();
     inline T* currentHead();
 };
+
+template <class T> using Stack_t = FatStack_t<T>;
+
 
 #include "../src/FatStack.cxx"
 

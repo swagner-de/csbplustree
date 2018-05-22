@@ -15,7 +15,6 @@ using std::endl;
 constexpr uint32_t numRand = 100000000;
 using ThisFatStack_t = FatStack_t<uint64_t, numRand + 10000>;
 using StdStack_t = std::stack<uint64_t>;
-using ThisFatStackMemHandler_t = ThisFatStack_t::StackMemoryHandler_t;
 
 
 void generateRandom(uint64_t* aRandArr, uint32_t aNum){
@@ -62,8 +61,7 @@ int main(){
     uint64_t *lRandArr = new uint64_t[numRand];
     generateRandom(lRandArr, numRand);
 
-    ThisFatStackMemHandler_t memHandler;
-    ThisFatStack_t lFs(numRand, &memHandler);
+    ThisFatStack_t lFs(numRand);
 
     double_t lDurFatIns = measure(&insert<ThisFatStack_t>, &lFs, lRandArr, numRand);
     double_t lDurFatRead = measure(&read<ThisFatStack_t>, &lFs, lRandArr, numRand);

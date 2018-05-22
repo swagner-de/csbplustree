@@ -148,7 +148,6 @@ private:
         bool        _edgeIndicator;
     };
 
-    typename Stack_t<CsbInnerNode_t*>::StackMemoryManager_t*  smm_;
 
     void split(byte* aNodeToSplit, uint32_t aDepth, Stack_t<CsbInnerNode_t*>* aPath, SplitResult_tt* aResult);
     inline bool isLeaf(uint32_t aDepth);

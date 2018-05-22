@@ -4,10 +4,6 @@
 #include <exception>
 #include <cstdint>
 
-#include "ChunkrefMemoryHandler.h"
-
-
-
 template <class T, uint32_t kNumMax=16384>
 class FatStack_t{
 

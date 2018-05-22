@@ -178,9 +178,7 @@ template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 uint32_t
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 roundUp(uint32_t aSize) {
-    uint8_t remainder = aSize % kSizeCacheLine;
-    if (remainder == 0) return aSize;
-    else return aSize + kSizeCacheLine - remainder;
+    return (aSize + kSizeCacheLine -1) / kSizeCacheLine;
 }
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
@@ -328,7 +326,7 @@ getBytesAllocatedPerChunk(){
                 lResults->push_back(lIt->getBytesAllocated());
             }
             return lResults;
-        }
+}
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 void

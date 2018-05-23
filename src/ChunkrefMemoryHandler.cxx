@@ -178,8 +178,9 @@ template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 uint32_t
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kBestFit>::
 roundUp(uint32_t aSize) {
-    return (aSize + kSizeCacheLine -1) / kSizeCacheLine;
-}
+    return ((aSize + kSizeCacheLine -1) / kSizeCacheLine) * kSizeCacheLine;
+};
+
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, bool kBestFit>
 byte*

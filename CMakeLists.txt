@@ -9,7 +9,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Weffc++")
 
 add_executable(test_csbtree_read_write tests/test_csbtree_read_write.cpp)
 
-add_executable(perf_all tests/perf_all.cpp)
+add_executable(perf_all tests/perf_all_idx_struc.cpp)
 add_library(csvwriter src/CsvWriter_t.cxx)
 add_library(art art_src/art.c)
 target_link_libraries(perf_all csvwriter art)

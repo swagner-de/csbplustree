@@ -60,31 +60,43 @@ int run_test_and_write_result(std::string aName, const TestConfig_tt& aConf, Csv
 }
 
 
-int run_config(const TestConfig_tt& aConf, CsvWriter_t* aCsvWriter, uint32_t aAverageCount){
+int run_config_csb(const TestConfig_tt& aConf, CsvWriter_t* aCsvWriter, uint32_t aAverageCount){
 
     run_test_and_write_result<CsbTree_t_32_32_1>("CsbTree_t_1", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_32_32_2>("CsbTree_t_2", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_32_32_3>("CsbTree_t_3", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_32_32_3>("CsbTree_t_4", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<std::map<uint32_t , uint32_t >>("map", aConf, aCsvWriter, aAverageCount);
 
     run_test_and_write_result<CsbTree_t_32_64_1>("CsbTree_t_1", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_32_64_2>("CsbTree_t_2", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_32_64_3>("CsbTree_t_3", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_32_64_3>("CsbTree_t_4", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<std::map<uint32_t , uint64_t >>("map", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<ArtWrapper_t<uint32_t , uint64_t >>("art", aConf, aCsvWriter, aAverageCount);
 
     run_test_and_write_result<CsbTree_t_64_64_1>("CsbTree_t_1", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_64_64_2>("CsbTree_t_2", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_64_64_3>("CsbTree_t_3", aConf, aCsvWriter, aAverageCount);
     run_test_and_write_result<CsbTree_t_64_64_3>("CsbTree_t_4", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<std::map<uint64_t , uint64_t >>("map", aConf, aCsvWriter, aAverageCount);
-    run_test_and_write_result<ArtWrapper_t<uint64_t , uint64_t >>("art", aConf, aCsvWriter, aAverageCount);
 
 
     return 0;
 }
+
+int run_config_csb_single(const TestConfig_tt& aConf, CsvWriter_t* aCsvWriter, uint32_t aAverageCount) {
+
+    run_test_and_write_result<CsbTree_t_64_64_3>("CsbTree_t_3", aConf, aCsvWriter, aAverageCount);
+    return 0;
+}
+
+int run_config_other(const TestConfig_tt& aConf, CsvWriter_t* aCsvWriter, uint32_t aAverageCount) {
+    run_test_and_write_result<std::map<uint64_t , uint64_t >>("map", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<ArtWrapper_t<uint64_t , uint64_t >>("art", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<std::map<uint32_t , uint64_t >>("map", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<ArtWrapper_t<uint32_t , uint64_t >>("art", aConf, aCsvWriter, aAverageCount);
+    run_test_and_write_result<std::map<uint32_t , uint32_t >>("map", aConf, aCsvWriter, aAverageCount);
+
+    return 0;
+}
+
 
 
 int main(int argc, char *argv[]) {
@@ -93,12 +105,12 @@ int main(int argc, char *argv[]) {
     if (argc < 3) {
         cout
                 << "Usage:" << endl
-                << argv[0] << " <csvpath> <# iterations>" << endl;
+                << argv[0] << " <mode (all|csb|csbsingle)> <csvpath> <# iterations>" << endl;
         return 1;
     }
 
-    CsvWriter_t *writer = new CsvWriter_t(argv[1]);
-    uint32_t iterations = std::stoi(argv[2]);
+    CsvWriter_t *writer = new CsvWriter_t(argv[2]);
+    uint32_t iterations = std::stoi(argv[3]);
 
     const uint64_t someNum = 10000000;
 
@@ -110,6 +122,13 @@ int main(int argc, char *argv[]) {
             someNum,            // _numKeysToLookup
     };
 
-    run_config(conf, writer, iterations);
+    std::string mode = argv[1];
 
+    if (mode == "all") {
+        run_config_csb(conf, writer, iterations);
+        run_config_other(conf, writer, iterations);
+    }
+    else if (mode == "csb") run_config_csb(conf, writer, iterations);
+    else if ( mode == "csbsingle") run_config_csb_single(conf, writer, iterations);
+    else cout << mode << " is not a valid mode" << endl;
 }

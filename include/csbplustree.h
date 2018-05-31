@@ -34,8 +34,8 @@ class CsbTree_t{
         Tid_t   second;
     };
 
-    byte* root_;
     TreeMemoryManager_t tmm_;
+    byte* root_;
     uint32_t depth_;
 
 public:
@@ -46,7 +46,8 @@ public:
 
 
     CsbTree_t();
-    ~CsbTree_t();
+    CsbTree_t(const CsbTree_t&) = default;
+    CsbTree_t& operator=(const CsbTree_t&) = default;
 
 
     class CsbInnerNode_t{
@@ -124,7 +125,7 @@ public:
     };
 
 
-    const uint16_t getCacheLinesPerNode();
+    uint16_t getCacheLinesPerNode();
     inline Tid_t* findRef(Key_t);
     inline iterator find(Key_t);
     inline int32_t find(Key_t aKey, Tid_t* aResult);

@@ -1,13 +1,13 @@
+#include <memory>
+
 #include "../include/global.h"
 #include "../include/FatStack_t.h"
 
 template <class T, uint32_t kNumMax>
 FatStack_t<T, kNumMax>::
 FatStack_t(uint32_t aSizeMin)
-        : sizeCurrent_(0), sizeAllocated_(aSizeMin)
-{
-    items_ = new T[aSizeMin];
-}
+        : sizeCurrent_(0), sizeAllocated_(aSizeMin), items_(new T[aSizeMin]){}
+
 
 template <class T, uint32_t kNumMax>
 FatStack_t<T, kNumMax>::

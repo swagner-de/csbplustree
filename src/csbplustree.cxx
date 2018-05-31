@@ -10,8 +10,7 @@
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-CsbTree_t() : depth_(0) {
-    root_ = tmm_.getMem();
+CsbTree_t() : tmm_(), root_(tmm_.getMem()), depth_(0) {
     new(root_) CsbLeafEdgeNode_t;
     ((CsbLeafNode_t*) getKthNode(1, root_))->numKeys_ = 0; // stop marker
     static_assert(kSizeNode == sizeof(CsbInnerNode_t), "CsbInnerNode size incorrect");
@@ -21,18 +20,12 @@ CsbTree_t() : depth_(0) {
     static_assert(kNumMaxKeysLeafNode >= (kNumMaxKeysLeafEdgeNode / 2), "CsbLeafNode cannot catch half of the keys of a CsbLeafEdge");
     // TODO assert that a InnerNode has space for 2 more nodes after a split
 }
-template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
-CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-~CsbTree_t() {
-    tmm_;
-}
-
 
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-CsbInnerNode_t() : numKeys_(0) {}
+CsbInnerNode_t() : numKeys_(0), children_(nullptr) {}
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
@@ -233,7 +226,7 @@ insert(Key_t aKey, Tid_t aTid) {
 
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
-const uint16_t
+uint16_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 getCacheLinesPerNode() {
     return kNumCacheLinesPerInnerNode;

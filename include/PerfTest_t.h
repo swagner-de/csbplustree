@@ -46,6 +46,8 @@ private:
 public:
 
     PerfTest_t(const TestConfig_tt &aConfig);
+    PerfTest_t(const PerfTest_t&) = default;
+    PerfTest_t& operator=(const PerfTest_t&) = default;
     ~PerfTest_t();
 
     bool verifyAllRead();

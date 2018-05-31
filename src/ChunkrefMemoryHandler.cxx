@@ -18,7 +18,7 @@ deliver() {
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-MemoryChunk_t() : freeItems_(kSizeChunk/kSizeObject) {
+MemoryChunk_t() : begin_(nullptr), freeItems_(kSizeChunk/kSizeObject), firstFree_(nullptr) {
     if (posix_memalign((void **) &this->begin_, kSizeCacheLine, kSizeChunk)) {
         throw MemAllocFailedException();
     }
@@ -143,7 +143,7 @@ isFullyUnallocated() {
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-MemoryHandler_t() {
+MemoryHandler_t() : chunks_(10){
     static_assert(kSizeChunk % kSizeObject == 0, "kSizeChunk is not an integer multiple of kSizeObject");
     chunks_.push_back(ThisMemoryChunk_t());
 }

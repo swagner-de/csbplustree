@@ -38,8 +38,6 @@ genKeysAndTids(){
     }
 }
 
-
-
 template <class IndexStruc_t>
 void
 PerfTest_t<IndexStruc_t>::
@@ -63,9 +61,10 @@ measure(MeasureFuncPt fToMeasure, uint64_t k){
 
 template <class IndexStruc_t>
 PerfTest_t<IndexStruc_t>::
-PerfTest_t(const TestConfig_tt& aConfig) : config_(aConfig), numKeysInserted_(0), numKeysRead_(0) {
-    keyTid_ = new pair<Key_t, Tid_t>[config_._numKeysToPreinsert + config_._numKeysToInsert];
-    tidFound_ = new Tid_t[config_._numKeysToPreinsert + config_._numKeysToInsert];
+PerfTest_t(const TestConfig_tt& aConfig):
+        idxStr_(), config_(aConfig), numKeysInserted_(0), numKeysRead_(0),
+        keyTid_(new pair<Key_t, Tid_t>[config_._numKeysToPreinsert + config_._numKeysToInsert]),
+        tidFound_(new Tid_t[config_._numKeysToPreinsert + config_._numKeysToInsert]) {
     genKeysAndTids();
 };
 

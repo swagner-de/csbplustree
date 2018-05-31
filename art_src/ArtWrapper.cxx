@@ -1,4 +1,4 @@
-#include <exception>
+#include <iostream>
 #include "art.h"
 
 using std::pair;
@@ -6,7 +6,7 @@ using std::pair;
 
 template <class Key_t, class Tid_t>
 ArtWrapper_t<Key_t, Tid_t>::
-ArtWrapper_t(){
+ArtWrapper_t() : tree_(){
     if (art_tree_init(&tree_) != 0){
       throw std::runtime_error("Could not initiate tree");
     }
@@ -16,7 +16,7 @@ template <class Key_t, class Tid_t>
 ArtWrapper_t<Key_t, Tid_t>::
 ~ArtWrapper_t(){
     if (art_tree_destroy(&tree_) != 0){
-        throw std::runtime_error("Could not destroy tree");
+        std::cout << "Could not destroy tree" << std::endl;
     }
 }
 

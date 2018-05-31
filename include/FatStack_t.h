@@ -17,7 +17,8 @@ public:
 
 
     FatStack_t(uint32_t aSizeMin);
-
+    FatStack_t(const FatStack_t& fatStack) = default;
+    FatStack_t&operator=(const FatStack_t& fatStack) = default;
     ~FatStack_t();
 
     T top();

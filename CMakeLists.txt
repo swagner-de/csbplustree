@@ -20,7 +20,7 @@ add_executable(perf_FatStack tests/perf_FatStack.cpp)
 find_package(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
 ADD_DEFINITIONS(-DBOOST_TEST_DYN_LINK)
 add_executable(test_ChunkRefMemoryHandler tests/test_ChunkRefMemoryHandler.cpp)
-target_link_libraries(test_ChunkRefMemoryHandler test_BitSetMemoryHandler
+target_link_libraries(test_ChunkRefMemoryHandler
         ${Boost_FILESYSTEM_LIBRARY}
         ${Boost_SYSTEM_LIBRARY}
         ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}

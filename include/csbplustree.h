@@ -28,14 +28,14 @@ class CsbTree_t{
 
     static constexpr uint32_t       kSizeMemoryChunk = kSizeNode * kNumMaxKeysInnerNode * 10000;
 
-    typedef typename ChunkRefMemoryHandler::MemoryHandler_t<kSizeMemoryChunk, kSizeCacheLine, true> TreeMemoryManager_t;
+    typedef typename ChunkRefMemoryHandler::MemoryHandler_t<kSizeMemoryChunk, kSizeCacheLine, kSizeNode * kNumMaxKeysInnerNode> TreeMemoryManager_t;
 
     struct iterator_tt {
         Tid_t   second;
     };
 
     byte* root_;
-    TreeMemoryManager_t* tmm_;
+    TreeMemoryManager_t tmm_;
     uint32_t depth_;
 
 public:

@@ -11,8 +11,7 @@
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbTree_t() : depth_(0) {
-    tmm_ = new TreeMemoryManager_t;
-    root_ = tmm_->getMem(kNumMaxKeysInnerNode * kSizeNode);
+    root_ = tmm_.getMem();
     new(root_) CsbLeafEdgeNode_t;
     ((CsbLeafNode_t*) getKthNode(1, root_))->numKeys_ = 0; // stop marker
     static_assert(kSizeNode == sizeof(CsbInnerNode_t), "CsbInnerNode size incorrect");
@@ -25,7 +24,7 @@ CsbTree_t() : depth_(0) {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 ~CsbTree_t() {
-    delete tmm_;
+    tmm_;
 }
 
 
@@ -40,7 +39,7 @@ void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
 allocateChildNodes(TreeMemoryManager_t* aTmm) {
-    this->children_ = aTmm->getMem(kNumMaxKeysInnerNode * kSizeNode);
+    this->children_ = aTmm->getMem();
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
@@ -446,7 +445,7 @@ split(byte* aNodeToSplit, uint32_t aDepth,  Stack_t <CsbInnerNode_t*>* aPath, Sp
 
     if (this->root_ == aNodeToSplit) {
         // split is called on root_
-        lNodeParent = new(tmm_->getMem(kNumMaxKeysInnerNode * kSizeNode)) CsbInnerNode_t();
+        lNodeParent = new(tmm_.getMem()) CsbInnerNode_t();
         lNodeParent->children_ = this->root_;
         lNodeParent->numKeys_ = 1;
         lNodeParent->keys_[0] = getLargestKey(this->root_, this->depth_ == 0, true);
@@ -589,7 +588,7 @@ split(byte* aNodeToSplit, uint32_t aDepth,  Stack_t <CsbInnerNode_t*>* aPath, Sp
     } else {
         // InnerNode
         new (lNodeSplittedRight) CsbInnerNode_t();
-        ((CsbInnerNode_t*) lNodeSplittedRight)->allocateChildNodes(tmm_);
+        ((CsbInnerNode_t*) lNodeSplittedRight)->allocateChildNodes(&tmm_);
         ((CsbInnerNode_t*) aNodeToSplit)->moveKeysAndChildren((CsbInnerNode_t*) lNodeSplittedRight, lNumKeysLeftSplit);
         lNodeParent->keys_[lIdxNodeToSplit] = ((CsbInnerNode_t*) aNodeToSplit)->getLargestKey();
 
@@ -725,7 +724,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 getMemoryUsage() {
-    this->tmm_->printUsage();
+    this->tmm_.printUsage();
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>

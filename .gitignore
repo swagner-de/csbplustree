@@ -91,3 +91,4 @@ cmake-build*/
 *.patch
 *.csv
 *.out
+*.ods

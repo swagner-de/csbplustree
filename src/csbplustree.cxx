@@ -619,13 +619,6 @@ remove(Key_t key, Tid_t tid) {
     this->numKeys_ -= 1;
 }
 
-template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
-void
-CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-remove(Key_t aKey, Tid_t aTid) {
-    // TODO remove method
-}
-
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 std::string

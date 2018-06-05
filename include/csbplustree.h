@@ -131,7 +131,6 @@ public:
     inline Tid_t operator [] (Key_t aKey);
     void inline insert(Key_t aKey, Tid_t aTid);
     void insert(std::pair<Key_t, Tid_t>);
-    void remove(Key_t aKey, Tid_t aTid);
     void saveTreeAsJson(std::string aPath);
     void getMemoryUsage();
     uint64_t countNodes();

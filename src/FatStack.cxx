@@ -19,7 +19,7 @@ FatStack_t<T, kNumMax>::
 template <class T, uint32_t kNumMax>
 void
 FatStack_t<T, kNumMax>::
-push(T item) {
+push(T const item) {
     if (sizeCurrent_ == sizeAllocated_){
         reallocate();
     }
@@ -43,7 +43,7 @@ pop() {
 template <class T, uint32_t kNumMax>
 T
 FatStack_t<T, kNumMax>::
-top() {
+top() const {
     if (sizeCurrent_ == 0){
         throw EmptyStackException();
     }
@@ -53,7 +53,7 @@ top() {
 template <class T, uint32_t kNumMax>
 uint64_t
 FatStack_t<T, kNumMax>::
-size(){
+size() const {
     return sizeCurrent_;
 };
 
@@ -61,7 +61,7 @@ size(){
 template <class T, uint32_t kNumMax>
 bool
 FatStack_t<T, kNumMax>::
-empty() {
+empty() const {
     return (sizeCurrent_ == 0);
 };
 
@@ -85,7 +85,7 @@ reallocate()  {
 template <class T, uint32_t kNumMax>
 T*
 FatStack_t<T, kNumMax>::
-currentHead() {
+currentHead() const {
     if (sizeCurrent_ == 0) return items_;
     return items_ + (sizeCurrent_ - 1);
 }

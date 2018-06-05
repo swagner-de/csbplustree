@@ -7,7 +7,7 @@
 template <class IndexStruc_t>
 void
 PerfTest_t<IndexStruc_t>::
-insertK(uint64_t k){
+insertK(uint64_t const k){
     for (uint64_t i = numKeysInserted_; i < numKeysInserted_ + k; i++){
         idxStr_.insert(keyTid_[i]);
     }
@@ -79,7 +79,7 @@ PerfTest_t<IndexStruc_t>::
 template <class IndexStruc_t>
 bool
 PerfTest_t<IndexStruc_t>::
-verifyAllRead(){
+verifyAllRead() const{
     for (uint64_t i=0; i < numKeysRead_; ++i){
         if (keyTid_[i].second != tidFound_[i]){
             return false;

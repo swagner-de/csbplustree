@@ -52,14 +52,14 @@ namespace ChunkRefMemoryHandler {
         MemoryChunk_t();
 
         void freeChunk();
-        uint32_t getBytesAllocated();
-        byte *getMem(bool aZeroed=false);
-        bool verify();
-        void release(byte *aStartAddr);
-        uint32_t getFree();
-        inline bool contains(UnusedMemorySubchunk_t *aAddr);
-        inline bool contains(byte *aAddr);
-        inline bool isFullyUnallocated();
+        uint32_t getBytesAllocated() const;
+        byte * getMem(bool const aZeroed=false);
+        bool verify() const;
+        void release(byte * const aStartAddr);
+        uint32_t getFree() const;
+        inline bool contains(UnusedMemorySubchunk_t const * const aAddr) const;
+        inline bool contains(byte const * const aAddr) const;
+        inline bool isFullyUnallocated() const;
 
     private:
         byte *begin_;
@@ -77,11 +77,11 @@ namespace ChunkRefMemoryHandler {
         ~MemoryHandler_t();
 
         byte* getMem(bool aZeroed=false);
-        bool verifyPointers();
-        void release(byte *aStartAddr);
-        std::vector<uint32_t>* getBytesAllocatedPerChunk();
-        void printUsage();
-        void getUsage(MemUsageStats_t& result);
+        bool verifyPointers() const;
+        void release(byte * const aStartAddr);
+        std::vector<uint32_t>* getBytesAllocatedPerChunk() const;
+        void printUsage() const;
+        void getUsage(MemUsageStats_t& result) const;
 
 
     private:

@@ -21,11 +21,11 @@ public:
     FatStack_t&operator=(const FatStack_t& fatStack) = default;
     ~FatStack_t();
 
-    T top();
-    bool empty();
-    uint64_t size();
+    T top() const;
+    bool empty() const;
+    uint64_t size() const;
 
-    void push(T item);
+    void push(T const item);
     void pop();
 
 private:
@@ -35,7 +35,7 @@ private:
     T* items_;
 
     void reallocate();
-    inline T* currentHead();
+    inline T* currentHead() const;
 };
 
 template <class T> using Stack_t = FatStack_t<T>;

@@ -36,7 +36,7 @@ freeChunk(){
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 uint32_t
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-getBytesAllocated(){
+getBytesAllocated() const{
     uint32_t lSumAllocated = kSizeChunk;
     UnusedMemorySubchunk_t* lCurrent = firstFree_;
     while (lCurrent != nullptr) {
@@ -49,7 +49,7 @@ getBytesAllocated(){
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 byte*
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-getMem(bool aZeroed) {
+getMem(bool const aZeroed) {
     if (0 == freeItems_) return nullptr;
 
     byte* lAddr = firstFree_->deliver();
@@ -71,7 +71,7 @@ getMem(bool aZeroed) {
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 bool
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-verify() {
+verify() const {
     UnusedMemorySubchunk_t *lCurrent = firstFree_;
     while (lCurrent != nullptr) {
         if (!this->contains(lCurrent)) return false;
@@ -83,7 +83,7 @@ verify() {
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 void
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-release(byte *aStartAddr) {
+release(byte * const aStartAddr) {
     // find chunk UnusedMemorySubchunk before item
     UnusedMemorySubchunk_t *lCurrent = firstFree_;
     UnusedMemorySubchunk_t *lPrevious = nullptr;
@@ -105,7 +105,7 @@ release(byte *aStartAddr) {
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 uint32_t
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-getFree(){
+getFree() const{
     UnusedMemorySubchunk_t *lCurrent = firstFree_;
     uint32_t lFree = 0;
     while (lCurrent != nullptr) {
@@ -118,7 +118,7 @@ getFree(){
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 bool
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-contains(UnusedMemorySubchunk_t *aAddr) {
+contains(UnusedMemorySubchunk_t const * const aAddr) const {
     return this->contains((byte *) aAddr);
 }
 
@@ -126,7 +126,7 @@ contains(UnusedMemorySubchunk_t *aAddr) {
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 bool
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-contains(byte *aAddr) {
+contains(byte const * const aAddr) const {
     return ((begin_ <= aAddr)
             &&
             (begin_ + kSizeChunk > aAddr));
@@ -135,7 +135,7 @@ contains(byte *aAddr) {
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 bool
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-isFullyUnallocated() {
+isFullyUnallocated() const {
     return (freeItems_ == kSizeChunk/kSizeObject);
 }
 
@@ -160,7 +160,7 @@ MemoryHandler_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 byte*
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-getMem(bool aZeroed) {
+getMem(bool const aZeroed) {
     byte *lFreeMem = nullptr;
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
         lFreeMem = lIt->getMem(aZeroed);
@@ -175,7 +175,7 @@ getMem(bool aZeroed) {
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 bool
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-verifyPointers(){
+verifyPointers() const {
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
         if (!lIt->verify()) return false;
     }
@@ -185,7 +185,7 @@ verifyPointers(){
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 void
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-release(byte *aStartAddr) {
+release(byte * const aStartAddr) {
     // find the chunk that contains the startAddr
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
         if (lIt->contains(aStartAddr)) {
@@ -202,7 +202,7 @@ release(byte *aStartAddr) {
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 std::vector<uint32_t>*
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-getBytesAllocatedPerChunk(){
+getBytesAllocatedPerChunk() const{
             std::vector<uint32_t>* lResults = new std::vector<uint32_t>();
             for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
                 lResults->push_back(lIt->getBytesAllocated());
@@ -213,7 +213,7 @@ getBytesAllocatedPerChunk(){
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 void
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-getUsage(MemUsageStats_t &aResult) {
+getUsage(MemUsageStats_t &aResult) const {
     aResult._numChunksAlloc = this->chunks_.size();
     aResult._totalBytesAlloc = 0;
     aResult._bytesFree = 0;
@@ -227,7 +227,7 @@ getUsage(MemUsageStats_t &aResult) {
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 void
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-printUsage() {
+printUsage() const {
     MemUsageStats_t lMemStats;
     this->getUsage(lMemStats);
 

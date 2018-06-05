@@ -32,7 +32,7 @@ private:
     pair<Key_t, Tid_t>* keyTid_;
     Tid_t *tidFound_;
 
-    void insertK(uint64_t k);
+    void insertK(uint64_t const k);
 
     void findK(uint64_t k);
 
@@ -50,7 +50,7 @@ public:
     PerfTest_t& operator=(const PerfTest_t&) = default;
     ~PerfTest_t();
 
-    bool verifyAllRead();
+    bool verifyAllRead() const;
 
     bool run(TestResult_tt &aResult);
 };

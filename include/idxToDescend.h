@@ -15,7 +15,7 @@ idxToDescend<uint64_t >(uint64_t const aKey, uint64_t const * aKeys, uint16_t co
     if (aNumKeys == 0) return 0;
     __m256i lVecKeys;
     __m256i lVecRes;
-    __m256i lVecComp= _mm256_set1_epi64x(aKey);
+    __m256i const lVecComp= _mm256_set1_epi64x(aKey);
     uint16_t lIdxItemGt;
     uint16_t const lNumItemsIter = 4;
     uint32_t lMaskRes;
@@ -43,7 +43,7 @@ idxToDescend<int64_t >(int64_t const aKey, int64_t const * aKeys, uint16_t const
     if (aNumKeys == 0) return 0;
     __m256i lVecKeys;
     __m256i lVecRes;
-    __m256i lVecComp= _mm256_set1_epi64x(aKey);
+    __m256i const lVecComp= _mm256_set1_epi64x(aKey);
     uint16_t lIdxItemGt;
     uint16_t const lNumItemsIter = 4;
     uint32_t lMaskRes;
@@ -74,7 +74,7 @@ idxToDescend<uint32_t >(uint32_t const aKey, uint32_t const * aKeys, uint16_t co
 
     __m256i lVecKeys;
     __m256i lVecRes;
-    __m256i lVecComp= _mm256_set1_epi32(aKey);
+    __m256i const lVecComp= _mm256_set1_epi32(aKey);
 
 
     for (uint16_t i = 0; i < aNumKeys; i+= lNumItemsIter){
@@ -104,7 +104,7 @@ idxToDescend<int32_t >(int32_t const aKey, int32_t const * aKeys, uint16_t const
 
     __m256i lVecKeys;
     __m256i lVecRes;
-    __m256i lVecComp= _mm256_set1_epi32(aKey);
+    __m256i const lVecComp= _mm256_set1_epi32(aKey);
 
 
     for (uint16_t i = 0; i < aNumKeys; i+= lNumItemsIter){

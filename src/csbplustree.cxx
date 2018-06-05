@@ -7,7 +7,7 @@
 #include <string>
 #include <iostream>
 
-
+#include "../include/csbplustree.h"
 #include "../include/idxToDescend.h"
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
@@ -33,7 +33,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-allocateChildNodes(TreeMemoryManager_t* aTmm) {
+allocateChildNodes(TreeMemoryManager_t * const aTmm) {
     this->children_ = aTmm->getMem();
 }
 
@@ -41,7 +41,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 uint16_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-getChildNodeIdx(byte *aChildNode) {
+getChildNodeIdx(byte const * const aChildNode) const {
     return (aChildNode - this->children_) / kSizeNode;
 }
 
@@ -49,7 +49,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 bool
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-childIsEdge(byte* aChildNode) {
+childIsEdge(byte const * const aChildNode) const {
     return (this->getChildNodeIdx(aChildNode) == 0);
 }
 
@@ -57,7 +57,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 uint16_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-getChildMaxKeys(uint32_t aChildDepth, uint32_t aTreeDepth, byte *aChild) {
+getChildMaxKeys(uint32_t const aChildDepth, uint32_t const aTreeDepth, byte const * const aChild) const {
     if (aTreeDepth == aChildDepth) {
         if(childIsEdge(aChild)) {
             return kNumMaxKeysLeafEdgeNode;
@@ -71,7 +71,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 uint16_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-getChildNumKeys(uint32_t aChildDepth, uint32_t aTreeDepth, byte *aChild) {
+getChildNumKeys(uint32_t const aChildDepth, uint32_t const aTreeDepth, byte const * const aChild) const {
     return this->getChildNumKeys((aChildDepth == aTreeDepth), aChild);
 }
 
@@ -79,7 +79,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 uint16_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-getChildNumKeys(bool aIsLeaf, byte *aChild) {
+getChildNumKeys(bool const aIsLeaf, byte const * const aChild) const{
     if (aIsLeaf) {
         if(childIsEdge(aChild)) {
             return ((CsbLeafEdgeNode_t*) aChild)->numKeys_;
@@ -93,7 +93,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 Key_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-getLargestKey() {
+getLargestKey() const {
     return this->keys_[this->numKeys_ -1 ];
 }
 
@@ -101,7 +101,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 Key_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafNode_t::
-getLargestKey() {
+getLargestKey() const {
     return this->keys_[this->numKeys_ - 1];
 }
 
@@ -109,7 +109,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 Key_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafEdgeNode_t::
-getLargestKey() {
+getLargestKey() const {
     return this->keys_[this->numKeys_ - 1 ];
 }
 
@@ -117,7 +117,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 bool
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-childIsFull(uint32_t aChildDepth, uint32_t aTreeDepth, byte *aChildNode) {
+childIsFull(uint32_t const aChildDepth, uint32_t const aTreeDepth, byte const * const aChildNode) const {
     return (this->getChildMaxKeys(aChildDepth, aTreeDepth, aChildNode) ==
             this->getChildNumKeys(aChildDepth, aTreeDepth, aChildNode));
 }
@@ -140,7 +140,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-shift(uint16_t aIdx) {
+shift(uint16_t const aIdx) {
     if (this->numKeys_ + 1 > kNumMaxKeysInnerNode) {
         throw TooManyKeysException();
     }
@@ -188,7 +188,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafNode_t::
-insert(Key_t aKey, Tid_t aTid) {
+insert(Key_t const aKey, Tid_t const aTid) {
 
     uint16_t lIdxToInsert = idxToDescend<Key_t>(aKey, this->keys_, this->numKeys_);
     if (lIdxToInsert == UINT16_MAX) lIdxToInsert = numKeys_;
@@ -210,7 +210,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafEdgeNode_t::
-insert(Key_t aKey, Tid_t aTid) {
+insert(Key_t const aKey, Tid_t const aTid) {
 
     uint16_t lIdxToInsert = idxToDescend<Key_t>(aKey, this->keys_, this->numKeys_);
     if (lIdxToInsert == UINT16_MAX) lIdxToInsert = numKeys_;
@@ -232,21 +232,21 @@ insert(Key_t aKey, Tid_t aTid) {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 uint16_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-getCacheLinesPerNode() {
+getCacheLinesPerNode() const {
     return kNumCacheLinesPerInnerNode;
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-insert(std::pair<Key_t, Tid_t> aKeyVal) {
+insert(std::pair<Key_t, Tid_t> const aKeyVal) {
     insert(aKeyVal.first, aKeyVal.second);
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-insert(Key_t aKey, Tid_t aTid) {
+insert(Key_t const aKey, Tid_t const aTid) {
 
     // find the leaf node to insert the key to and record the path upwards the tree
     //Stack_t<CsbInnerNode_t*>            lPath;
@@ -299,7 +299,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-moveKeysAndChildren(CsbInnerNode_t* aNodeTarget, uint16_t aNumKeysRemaining) {
+moveKeysAndChildren(CsbInnerNode_t * const aNodeTarget, uint16_t const aNumKeysRemaining) {
     memcpy(
             aNodeTarget->keys_,
             &this->keys_[aNumKeysRemaining],
@@ -321,7 +321,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafNode_t::
-moveKeysAndTids(CsbLeafNode_t* aNodeTarget, uint16_t aNumKeysRemaining){
+moveKeysAndTids(CsbLeafNode_t * const aNodeTarget, uint16_t const aNumKeysRemaining){
     memmove(
             aNodeTarget->keys_,
             &this->keys_[aNumKeysRemaining],
@@ -341,7 +341,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafNode_t::
-leftInsertKeysAndTids(CsbLeafNode_t *aNodeSource, uint16_t aNumKeys) {
+leftInsertKeysAndTids(CsbLeafNode_t * const aNodeSource, uint16_t const aNumKeys) {
 
     /*
      * _ move existing keys
@@ -389,7 +389,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafEdgeNode_t::
-moveKeysAndTids(CsbLeafNode_t* aNodeTarget, uint16_t aNumKeysRemaining){
+moveKeysAndTids(CsbLeafNode_t * const aNodeTarget, uint16_t const aNumKeysRemaining){
     memmove(
             aNodeTarget->keys_,
             &this->keys_[aNumKeysRemaining],
@@ -428,7 +428,7 @@ toLeafEdge() {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-split(byte* aNodeToSplit, uint32_t aDepth,  Stack_t <CsbInnerNode_t*>* aPath, SplitResult_tt* aResult){
+split(byte * aNodeToSplit, uint32_t aDepth,  Stack_t <CsbInnerNode_t*> * const aPath, SplitResult_tt * const aResult){
 
 
     CsbInnerNode_t* lNodeParent;
@@ -600,7 +600,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafNode_t::
-remove(Key_t key, Tid_t tid) {
+remove(Key_t const key, const Tid_t tid) {
     uint16_t lIdxToRemove = idxToDescend<Key_t>(key, this->keys_, this->numKeys_);
     while (this->tids_[lIdxToRemove] != tid && lIdxToRemove < this->numKeys_ && this->keys_[lIdxToRemove] == key)
         lIdxToRemove++;
@@ -624,7 +624,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 std::string
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbInnerNode_t::
-asJson(uint32_t aDepth, uint32_t aTreeDepth) {
+asJson(uint32_t const aDepth, uint32_t const aTreeDepth) const {
     /*
      * "text": {"name": "Parent node"},
      *  "children": [....]
@@ -654,7 +654,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 std::string
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafNode_t::
-asJson() {
+asJson() const {
     /*
      * "text": {"name": "Parent node"},
      *  "children": [....]
@@ -669,7 +669,7 @@ template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 std::string
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafEdgeNode_t::
-asJson() {
+asJson() const {
     /*
      * "text": {"name": "Parent node"},
      *  "children": [....]
@@ -683,7 +683,7 @@ asJson() {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 std::string
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-getTreeAsJson() {
+getTreeAsJson() const{
     if (this->depth_ == 0) {
         return "{\"nodeStructure\":" + ((CsbLeafEdgeNode_t *) root_)->asJson() + "}";
     }
@@ -693,7 +693,7 @@ getTreeAsJson() {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 std::string
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-kThChildrenAsJson(uint32_t aK, byte *aFirstChild, uint32_t aNodeDepth, uint32_t aTreeDepth) {
+kThChildrenAsJson(uint32_t const aK, byte * const aFirstChild, uint32_t const aNodeDepth, uint32_t const aTreeDepth) {
     if (aTreeDepth == aNodeDepth) {
         if (aK == 0){
             return ((CsbLeafEdgeNode_t*) getKthNode(aK, aFirstChild))->asJson();
@@ -706,21 +706,21 @@ kThChildrenAsJson(uint32_t aK, byte *aFirstChild, uint32_t aNodeDepth, uint32_t 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-saveTreeAsJson(std::string aPath) {
+saveTreeAsJson(std::string const aPath) const {
     std::ofstream file(aPath);
     file << getTreeAsJson();
 }
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-getMemoryUsage() {
+getMemoryUsage() const{
     this->tmm_.printUsage();
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-findLeafNode(Key_t aKey, SearchResult_tt* aResult) {
+findLeafNode(Key_t const aKey, SearchResult_tt * const aResult) const {
 
     if (this->depth_ == 0) {
         aResult->_idx = 0;
@@ -753,7 +753,7 @@ findLeafNode(Key_t aKey, SearchResult_tt* aResult) {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, Stack_t<CsbInnerNode_t*>* aPath) {
+findLeafForInsert(Key_t const aKey, SearchResult_tt * const aResult, Stack_t<CsbInnerNode_t*> * const aPath) const {
 
 
     uint16_t            lIdxToDescend= 0;
@@ -780,7 +780,7 @@ findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, Stack_t<CsbInnerNode_t*>
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 Tid_t*
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-findRef(Key_t aKey) {
+findRef(Key_t const aKey) const {
 
     SearchResult_tt     lSearchResult;
     Key_t *             lKeys;
@@ -825,7 +825,7 @@ findRef(Key_t aKey) {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 typename CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::iterator
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-find(Key_t aKey) {
+find(Key_t const aKey) const{
     return (iterator) findRef(aKey);
 }
 
@@ -833,7 +833,7 @@ find(Key_t aKey) {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 Tid_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-operator[](Key_t aKey) {
+operator[](Key_t const aKey) const {
     return *findRef(aKey);
 }
 
@@ -841,14 +841,14 @@ operator[](Key_t aKey) {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 bool
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-isLeaf(uint32_t aDepth) {
+isLeaf(uint32_t const aDepth) const {
     return (aDepth == this->depth_);
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 Key_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-getLargestKey(byte* aNode, bool aChild, bool aEdge) {
+getLargestKey(byte const * const aNode, bool const aChild, bool const aEdge) {
     if (aChild){
         if (aEdge) {
             return ((CsbLeafEdgeNode_t*) aNode)->getLargestKey();
@@ -862,14 +862,14 @@ getLargestKey(byte* aNode, bool aChild, bool aEdge) {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 byte *
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-getKthNode(uint16_t aK, byte *aNodeFirstChild) {
+getKthNode(uint16_t const aK, byte * const aNodeFirstChild) {
     return aNodeFirstChild + aK * kSizeNode;
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 uint64_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-getNumKeys() {
+getNumKeys() const {
     if (isLeaf(0)){
         return ((CsbLeafEdgeNode_t*) this->root_)->numKeys_;
     }
@@ -906,7 +906,7 @@ getNumKeys() {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 uint64_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-getNumKeysBackwards() {
+getNumKeysBackwards() const {
     if (isLeaf(0)){
         return ((CsbLeafEdgeNode_t*) this->root_)->numKeys_;
     }
@@ -943,7 +943,7 @@ getNumKeysBackwards() {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 uint64_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-countNodes() {
+countNodes() const{
     return countNodes((CsbInnerNode_t*) root_, 0);
 }
 
@@ -952,7 +952,7 @@ countNodes() {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 uint64_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-countNodes(CsbInnerNode_t* aNode, uint32_t aDepth) {
+countNodes(CsbInnerNode_t const * const aNode, uint32_t const aDepth) const {
     if (aDepth == depth_)
         return kNumMaxKeysInnerNode;
     uint64_t lNumNodes = kNumMaxKeysInnerNode;
@@ -966,7 +966,7 @@ countNodes(CsbInnerNode_t* aNode, uint32_t aDepth) {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 bool
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-verifyOrder() {
+verifyOrder() const {
 
     CsbInnerNode_t*      lNodeCurrent        = (CsbInnerNode_t*) this->root_;
     CsbLeafEdgeNode_t*  lLeafEdgeCurrent;

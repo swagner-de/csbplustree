@@ -28,7 +28,7 @@ idxToDescend<uint64_t >(uint64_t const aKey, uint64_t const * aKeys, uint16_t co
                 _mm256_cmpgt_epi64 (lVecKeys, lVecComp)
         );
         lMaskRes = _mm256_movemask_epi8 (lVecRes);
-        lIdxItemGt = (_bit_scan_forward(lMaskRes) / 8) + i;
+        lIdxItemGt = (__builtin_ctzll(lMaskRes) / 8) + i;
         if (lMaskRes != 0 && aNumKeys > lIdxItemGt){
             return lIdxItemGt;
         }
@@ -56,7 +56,7 @@ idxToDescend<int64_t >(int64_t const aKey, int64_t const * aKeys, uint16_t const
                 _mm256_cmpgt_epi64 (lVecKeys, lVecComp)
         );
         lMaskRes = _mm256_movemask_epi8 (lVecRes);
-        lIdxItemGt = (_bit_scan_forward(lMaskRes) / 8) + i;
+        lIdxItemGt = (__builtin_ctzll(lMaskRes) / 8) + i;
         if (lMaskRes != 0 && aNumKeys > lIdxItemGt){
             return lIdxItemGt;
         }
@@ -86,7 +86,7 @@ idxToDescend<uint32_t >(uint32_t const aKey, uint32_t const * aKeys, uint16_t co
         );
         lMaskRes = _mm256_movemask_epi8(lVecRes);
 
-        lIdxItemGt = (_bit_scan_forward(lMaskRes) / 4) + i;
+        lIdxItemGt = (__builtin_ctzll(lMaskRes) / 4) + i;
         if (lMaskRes != 0 && aNumKeys > lIdxItemGt){
             return lIdxItemGt;
         }
@@ -116,7 +116,7 @@ idxToDescend<int32_t >(int32_t const aKey, int32_t const * aKeys, uint16_t const
         );
         lMaskRes = _mm256_movemask_epi8(lVecRes);
 
-        lIdxItemGt = (_bit_scan_forward(lMaskRes) / 4) + i;
+        lIdxItemGt = (__builtin_ctzll(lMaskRes) / 4) + i;
         if (lMaskRes != 0 && aNumKeys > lIdxItemGt){
             return lIdxItemGt;
         }

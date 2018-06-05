@@ -128,7 +128,6 @@ public:
     uint16_t getCacheLinesPerNode();
     inline Tid_t* findRef(Key_t);
     inline iterator find(Key_t);
-    inline int32_t find(Key_t aKey, Tid_t* aResult);
     inline Tid_t operator [] (Key_t aKey);
     void inline insert(Key_t aKey, Tid_t aTid);
     void insert(std::pair<Key_t, Tid_t>);
@@ -160,9 +159,6 @@ private:
     static std::string kThChildrenAsJson(uint32_t aK, byte* aFirstChild, uint32_t aNodeDepth, uint32_t aTreeDepth);
     static Key_t getLargestKey(byte* aNode, bool aChild, bool aEdge);
     static byte* getKthNode(uint16_t aK, byte* aNodeFirstChild);
-    static uint16_t idxToDescend(Key_t aKey, Key_t aKeys[], uint16_t aNumKeys);
-    static uint16_t idxToInsert(Key_t aKey, Key_t aKeys[], uint16_t aNumKeys);
-
 };
 
 #include "../src/csbplustree.cxx"

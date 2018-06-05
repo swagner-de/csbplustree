@@ -12,11 +12,14 @@ inline uint64_t mapKey(uint32_t aKey){
 }
 
 inline void checkResult(Tree_t* aTree, uint32_t aKey, uint64_t aTid){
-    uint64_t lRes;
-    if (aTree->find(aKey, &lRes) != 0) {
+    uint64_t * const res = aTree->findRef(aKey);
+    if (res == nullptr) {
         std::cout << "Key " << aKey << " not found" << std::endl;
-    } else if (lRes != aTid){
-        std::cout << "Value " << lRes << " at lookup of " << aKey << " incorrect" << std::endl;
+        aTree->findRef(aKey);
+        return;
+    }
+    if (*res != aTid){
+        std::cout << "Value " << res << " at lookup of " << aKey << " incorrect" << std::endl;
     }
 }
 
@@ -103,8 +106,8 @@ int insert_rand(uint32_t maxKeys, uint32_t savePoint, std::string basePath,uint6
         if (numKeysTree == savePoint)
             tree.saveTreeAsJson(basePath + "tree_rand_"+ std::to_string(seed) + "_at" + std::to_string(numKeysTree) + ".json");
 
-        if (!tree.verifyOrder())
-            std::cout << "Tree out of order" << std::endl;
+//        if (!tree.verifyOrder())
+//            std::cout << "Tree out of order" << std::endl;
 
     }
     delete[](inserted_vals);

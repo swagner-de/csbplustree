@@ -8,6 +8,8 @@
 #include <iostream>
 
 
+#include "../include/idxToDescend.h"
+
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbTree_t() : tmm_(), root_(tmm_.getMem()), depth_(0) {
@@ -188,7 +190,8 @@ CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafNode_t::
 insert(Key_t aKey, Tid_t aTid) {
 
-    uint16_t lIdxToInsert = idxToInsert(aKey, this->keys_, this->numKeys_);
+    uint16_t lIdxToInsert = idxToDescend<Key_t>(aKey, this->keys_, this->numKeys_);
+    if (lIdxToInsert == UINT16_MAX) lIdxToInsert = numKeys_;
 
     memmove(&this->keys_[lIdxToInsert + 1],
             &this->keys_[lIdxToInsert],
@@ -209,7 +212,8 @@ CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafEdgeNode_t::
 insert(Key_t aKey, Tid_t aTid) {
 
-    uint16_t lIdxToInsert = idxToInsert(aKey, this->keys_, this->numKeys_);
+    uint16_t lIdxToInsert = idxToDescend<Key_t>(aKey, this->keys_, this->numKeys_);
+    if (lIdxToInsert == UINT16_MAX) lIdxToInsert = numKeys_;
 
     memmove(&this->keys_[lIdxToInsert + 1],
             &this->keys_[lIdxToInsert],
@@ -597,7 +601,7 @@ void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 CsbLeafNode_t::
 remove(Key_t key, Tid_t tid) {
-    uint16_t lIdxToRemove = idxToDescend(key, this->keys_, this->numKeys_);
+    uint16_t lIdxToRemove = idxToDescend<Key_t>(key, this->keys_, this->numKeys_);
     while (this->tids_[lIdxToRemove] != tid && lIdxToRemove < this->numKeys_ && this->keys_[lIdxToRemove] == key)
         lIdxToRemove++;
     if (this->tids_[lIdxToRemove] != tid) {
@@ -738,7 +742,7 @@ findLeafNode(Key_t aKey, SearchResult_tt* aResult) {
 
     while (lLevel < this->depth_) {
 
-        lIdxToDescend= idxToDescend(aKey, lNodeCurrent->keys_, lNodeCurrent->numKeys_);
+        lIdxToDescend= idxToDescend<Key_t>(aKey, lNodeCurrent->keys_, lNodeCurrent->numKeys_);
         if (lIdxToDescend == UINT16_MAX) {
             aResult->_node = nullptr;
             return;
@@ -765,7 +769,7 @@ findLeafForInsert(Key_t aKey, SearchResult_tt* aResult, Stack_t<CsbInnerNode_t*>
 
     while (lLevel < this->depth_) {
         aPath->push(lNodeCurrent);
-        lIdxToDescend= idxToDescend(aKey, lNodeCurrent->keys_, lNodeCurrent->numKeys_);
+        lIdxToDescend= idxToDescend<Key_t>(aKey, lNodeCurrent->keys_, lNodeCurrent->numKeys_);
         if (lIdxToDescend == UINT16_MAX) {
             lIdxToDescend = lNodeCurrent->numKeys_ - 1;
             lNodeCurrent->keys_[lIdxToDescend] = aKey;
@@ -807,7 +811,7 @@ findRef(Key_t aKey) {
     }
 
 
-    lIdxTid = idxToDescend(aKey, lKeys, lNumKeys);
+    lIdxTid = idxToDescend<Key_t>(aKey, lKeys, lNumKeys);
     if (lIdxTid == UINT16_MAX){
         return nullptr;
     }
@@ -832,15 +836,6 @@ find(Key_t aKey) {
     return (iterator) findRef(aKey);
 }
 
-template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
-int32_t
-CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-find(Key_t aKey, Tid_t* aResult) {
-    *aResult = *findRef(aKey);
-    if (aResult == nullptr) return -1;
-    return 0;
-
-}
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 Tid_t
@@ -876,32 +871,6 @@ byte *
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
 getKthNode(uint16_t aK, byte *aNodeFirstChild) {
     return aNodeFirstChild + aK * kSizeNode;
-}
-
-template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
-uint16_t
-CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-idxToDescend(Key_t aKey, Key_t aKeys[], uint16_t aNumKeys) {
-    if (aNumKeys == 0) return 0;
-    for (uint16_t i = 0; i < aNumKeys; i++) {
-        if (aKeys[i] >= aKey) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
-uint16_t
-CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-idxToInsert(Key_t aKey, Key_t aKeys[], uint16_t aNumKeys) {
-    if (aNumKeys == 0) return 0;
-    for (uint16_t i = 0; i < aNumKeys; i++) {
-        if (aKeys[i] >= aKey) {
-            return i;
-        }
-    }
-    return aNumKeys;
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>

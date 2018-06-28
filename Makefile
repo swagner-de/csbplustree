@@ -7,5 +7,8 @@ perftree:
 perfstack:
 	$(CC) $(CFLAGS) -o perf_FatStack.o tests/perf_FatStack.cpp
 
+perfmove:
+	$(CC) $(CFLAGS) -o perf_move.o tests/perf_move.cpp
+
 
 allperf: perftree perfstack

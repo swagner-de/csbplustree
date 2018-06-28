@@ -33,3 +33,6 @@ target_link_libraries(test_BitSetMemoryHandler
         ${Boost_SYSTEM_LIBRARY}
         ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
         )
+
+add_executable(test_perf_simd tests/perf_simd.cxx)
+add_executable(test_perf_move tests/perf_move.cpp)

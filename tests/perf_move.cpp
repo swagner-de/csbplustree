@@ -10,7 +10,7 @@
 
 
 uint32_t constexpr lNumMaxItemsToMove = 100;
-uint32_t constexpr lNumIter = 100;
+uint32_t constexpr lNumIter = 100000;
 
 
 using std::cout;

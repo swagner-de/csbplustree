@@ -10,5 +10,7 @@ perfstack:
 perfmove:
 	$(CC) $(CFLAGS) -o perf_move.o tests/perf_move.cpp
 
+perfsimd:
+	$(CC) $(CFLAGS) -o perf_simd.o tests/perf_simd.cxx
 
 allperf: perftree perfstack

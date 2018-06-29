@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sys/param.h>
 
+#define __load__mm256i _mm256_stream_load_si256((__m256i*) &aKeys[i])
 
 using std::fstream;
 using std::cout;
@@ -15,9 +16,14 @@ constexpr uint32_t kNumMaxKeys = 30;
 constexpr uint32_t kNumIter = 100000;
 
 
-template <class tKey>
+
+template <class Key_t>
+uint32_t compareSimd(Key_t const aKey, Key_t const * aKeys, uint16_t const aNumKeys);
+
+template <>
 uint32_t
-compareSimd(tKey const aKey, tKey const * aKeys, uint16_t const aNumKeys) {
+compareSimd<uint64_t >(uint64_t const aKey, uint64_t const * aKeys, uint16_t const aNumKeys) {
+    if (aNumKeys == 0) return 0;
     __m256i lVecKeys;
     __m256i lVecRes;
     __m256i const lVecComp= _mm256_set1_epi64x(aKey);
@@ -26,14 +32,43 @@ compareSimd(tKey const aKey, tKey const * aKeys, uint16_t const aNumKeys) {
     uint32_t lMaskRes;
 
     for (uint16_t i = 0; i < aNumKeys; i+= lNumItemsIter){
-        lVecKeys = _mm256_stream_load_si256((__m256i*) &aKeys[i]);
-
+        lVecKeys = __load__mm256i;
         lVecRes =  _mm256_or_si256(
                 _mm256_cmpeq_epi64 (lVecKeys, lVecComp),
                 _mm256_cmpgt_epi64 (lVecKeys, lVecComp)
         );
         lMaskRes = _mm256_movemask_epi8 (lVecRes);
         lIdxItemGt = (__builtin_ctzll(lMaskRes) / 8) + i;
+        if (lMaskRes != 0 && aNumKeys > lIdxItemGt){
+            return lIdxItemGt;
+        }
+    }
+    return -1;
+}
+
+template <>
+uint32_t
+compareSimd<uint32_t >(uint32_t const aKey, uint32_t const * aKeys, uint16_t const aNumKeys) {
+    if (aNumKeys == 0) return 0;
+    uint16_t const lNumItemsIter = 8;
+    uint16_t lIdxItemGt;
+    uint32_t lMaskRes;
+
+    __m256i lVecKeys;
+    __m256i lVecRes;
+    __m256i const lVecComp= _mm256_set1_epi32(aKey);
+
+
+    for (uint16_t i = 0; i < aNumKeys; i+= lNumItemsIter){
+        lVecKeys = __load__mm256i;
+
+        lVecRes =  _mm256_or_si256(
+                _mm256_cmpeq_epi32 (lVecKeys, lVecComp),
+                _mm256_cmpgt_epi32 (lVecKeys, lVecComp)
+        );
+        lMaskRes = _mm256_movemask_epi8(lVecRes);
+
+        lIdxItemGt = (__builtin_ctzll(lMaskRes) / 4) + i;
         if (lMaskRes != 0 && aNumKeys > lIdxItemGt){
             return lIdxItemGt;
         }
@@ -147,9 +182,8 @@ int main(){
     lCsvFile.open("perf_simd.csv", fstream::app);
     lCsvFile << "BytePerItem,posItemMatching,avgTimeSimd,stdDevSimd,avgTimeRegular,stdDevRegular" << endl;
 
-    test<int64_t>(lCsvFile);
-    test<int32_t>(lCsvFile);
-    test<int16_t>(lCsvFile);
+    test<uint64_t>(lCsvFile);
+    test<uint32_t>(lCsvFile);
 
     return 0;
 }

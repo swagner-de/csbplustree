@@ -3,11 +3,15 @@
 
 #include <cstdint>
 
-#if __x86_64 && __AVX2__
+#if __x86_64 && __AVX2__ && __aa__
 #include <immintrin.h>
+
+#define __load__mm256i _mm256_stream_load_si256((__m256i*) &aKeys[i])
+//#define __load__mm256i _mm256_load_si256((__m256i*) &aKeys[i])
+//#define __load__mm256i *(__m256i*)(&aKeys[i])
+
 template <class Key_t>
 uint16_t idxToDescend(Key_t const aKey, Key_t const * aKeys, uint16_t const aNumKeys);
-
 
 template <>
 uint16_t
@@ -21,8 +25,7 @@ idxToDescend<uint64_t >(uint64_t const aKey, uint64_t const * aKeys, uint16_t co
     uint32_t lMaskRes;
 
     for (uint16_t i = 0; i < aNumKeys; i+= lNumItemsIter){
-        lVecKeys = _mm256_stream_load_si256((__m256i*) &aKeys[i]);
-
+        lVecKeys = __load__mm256i;
         lVecRes =  _mm256_or_si256(
                 _mm256_cmpeq_epi64 (lVecKeys, lVecComp),
                 _mm256_cmpgt_epi64 (lVecKeys, lVecComp)
@@ -49,7 +52,7 @@ idxToDescend<int64_t >(int64_t const aKey, int64_t const * aKeys, uint16_t const
     uint32_t lMaskRes;
 
     for (uint16_t i = 0; i < aNumKeys; i+= lNumItemsIter){
-        lVecKeys = _mm256_stream_load_si256((__m256i*) &aKeys[i]);
+        lVecKeys = __load__mm256i;
 
         lVecRes =  _mm256_or_si256(
                 _mm256_cmpeq_epi64 (lVecKeys, lVecComp),
@@ -78,7 +81,7 @@ idxToDescend<uint32_t >(uint32_t const aKey, uint32_t const * aKeys, uint16_t co
 
 
     for (uint16_t i = 0; i < aNumKeys; i+= lNumItemsIter){
-        lVecKeys = _mm256_stream_load_si256((__m256i*) &aKeys[i]);
+        lVecKeys = __load__mm256i;
 
         lVecRes =  _mm256_or_si256(
                 _mm256_cmpeq_epi32 (lVecKeys, lVecComp),
@@ -108,7 +111,7 @@ idxToDescend<int32_t >(int32_t const aKey, int32_t const * aKeys, uint16_t const
 
 
     for (uint16_t i = 0; i < aNumKeys; i+= lNumItemsIter){
-        lVecKeys = _mm256_stream_load_si256((__m256i*) &aKeys[i]);
+        lVecKeys = __load__mm256i;
 
         lVecRes =  _mm256_or_si256(
                 _mm256_cmpeq_epi32 (lVecKeys, lVecComp),

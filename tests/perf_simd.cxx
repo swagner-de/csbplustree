@@ -3,8 +3,10 @@
 #include <random>
 #include <chrono>
 #include <fstream>
+#include <cstdlib>
 #include <iostream>
 #include <sys/param.h>
+#include <cstring>
 
 #define __load__mm256i _mm256_stream_load_si256((__m256i*) &aKeys[i])
 
@@ -12,7 +14,7 @@ using std::fstream;
 using std::cout;
 using std::endl;
 
-constexpr uint32_t kNumMaxKeys = 30;
+constexpr uint32_t kNumMaxKeys = 40;
 constexpr uint32_t kNumIter = 100000;
 
 
@@ -140,11 +142,24 @@ flushLine(fstream& aCsv, uint32_t aSizeItem, uint32_t aIdxMatch, double_t aAvgSi
 
 
 template <class tKey>
+void inline
+rewriteKeys(tKey * const aKeys, tKey * const aLookup){
+    generateRandom<tKey>(aKeys, kNumMaxKeys);
+    memcpy(
+            aLookup,
+            aKeys,
+            sizeof(tKey) * kNumMaxKeys
+    );
+}
+
+template <class tKey>
 void
 test(fstream& aCsvFile) {
 
     auto * const lKeys = (tKey *) getMem(kNumMaxKeys* sizeof(tKey));
-    generateRandom<tKey>(lKeys, kNumMaxKeys);
+    auto * const lLookup = (tKey *) getMem(kNumMaxKeys* sizeof(tKey));
+
+
 
     auto lResSimd =  new double_t[kNumIter];
     auto lResRegular =  new double_t[kNumIter];
@@ -154,8 +169,10 @@ test(fstream& aCsvFile) {
     // for match in every position
     for (uint16_t lPosMatch = 0; lPosMatch < kNumMaxKeys; lPosMatch++){
         for (uint32_t i = 0; i< kNumIter; i++){
-            lResSimd[i] = measure<tKey>(compareSimd<tKey>, lKeys[lPosMatch], lKeys, kNumMaxKeys);
-            lResRegular[i] = measure<tKey>(compare<tKey>, lKeys[lPosMatch], lKeys, kNumMaxKeys);
+            rewriteKeys(lKeys, lLookup);
+            lResSimd[i] = measure<tKey>(compareSimd<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys);
+            rewriteKeys(lKeys, lLookup);
+            lResRegular[i] = measure<tKey>(compare<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys);
         }
         lAvgSimd = average(lResSimd, kNumIter);
         lAvgRegular = average(lResRegular, kNumIter);
@@ -171,8 +188,8 @@ test(fstream& aCsvFile) {
         );
     }
 
-free(lKeys);
-
+    delete[](lKeys);
+    delete[](lLookup);
 }
 
 int main(){

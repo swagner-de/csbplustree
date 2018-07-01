@@ -76,37 +76,62 @@ void generateRandom(tKey * const aRandArr, uint32_t aNum){
 }
 
 void inline
-flushLine(fstream& aCsv, uint32_t aSizeItem, uint32_t aNumBytes, double_t aAvgMemMove, double_t aAvgLoop){
-    aCsv << aSizeItem << "," << aNumBytes << "," << aAvgMemMove << "," << aAvgLoop << "," << endl;
+flushLine(fstream& aCsv, uint32_t aSizeItem, uint32_t aNumBytes, double_t aAvg){
+    aCsv << aSizeItem << "," << aNumBytes << "," << aAvg << "," << endl;
 }
+
 
 template <class tKey>
 void
-test(fstream& aCsvFile){
+testLoop(fstream& aCsvFile){
 
     auto * const lSrcArray = (tKey *) getMem(lNumMaxBytesToMove);
     auto * const lDstArray = (tKey *) getMem(lNumMaxBytesToMove);
+
+    auto lResLoop =  new double_t[lNumIter];
+
+    generateRandom<tKey>(lSrcArray, lNumMaxBytesToMove / sizeof(tKey));
+
+
+    for (uint32_t lNumBytesToMove = 0; lNumBytesToMove <=  lNumMaxBytesToMove; lNumBytesToMove+= sizeof(tKey)) {
+        for (uint32_t i = 0; i < lNumIter; i++) {
+            lResLoop[i] = measure(&moveLoop<tKey>, lSrcArray, lDstArray, 0, lNumBytesToMove / sizeof(tKey));
+            memset(lDstArray, 0, lNumBytesToMove);
+        }
+        flushLine(aCsvFile, sizeof(tKey), lNumBytesToMove, average(lResLoop, lNumIter));
+    }
+
+
+
+    delete[](lSrcArray);
+    delete[](lDstArray);
+
+}
+
+void
+testMemMove(fstream& aCsvFile){
+
+    using tKey = uint64_t;
+
+    auto * const lSrcArray = (tKey *) getMem(lNumMaxBytesToMove);
+    auto * const lDstArray = (tKey *) getMem(lNumMaxBytesToMove);
+
     auto lResMemMove =  new double_t[lNumIter];
 
     generateRandom<tKey>(lSrcArray, lNumMaxBytesToMove / sizeof(tKey));
-    double_t lAvgResMemMove, lAvgResLoop;
 
-    auto lResLoop =  new double_t[lNumIter];
     for (uint32_t lNumBytesToMove = 0; lNumBytesToMove <=  lNumMaxBytesToMove; lNumBytesToMove+= sizeof(tKey)) {
         for (uint32_t i = 0; i<lNumIter; i++){
-            lResLoop[i] = measure(&moveLoop<tKey>, lSrcArray, lDstArray, 0, lNumBytesToMove / sizeof(tKey));
-            memset(lDstArray, 0, lNumBytesToMove);
+
             lResMemMove[i] = measure(&moveMemMove<tKey>, lSrcArray, lDstArray, 0, lNumBytesToMove / sizeof(tKey));
             memset(lDstArray, 0, lNumBytesToMove);
         }
 
-        lAvgResMemMove = average(lResMemMove, lNumIter);
-        lAvgResLoop = average(lResLoop, lNumIter);
-        flushLine(aCsvFile, sizeof(tKey), lNumBytesToMove, lAvgResMemMove, lAvgResLoop);
+        flushLine(aCsvFile, 0, lNumBytesToMove, average(lResMemMove, lNumIter));
     }
 
-    free(lSrcArray);
-    free(lDstArray);
+    delete[](lSrcArray);
+    delete[](lDstArray);
 
 }
 
@@ -117,12 +142,11 @@ main(){
 
     fstream lCsvFile;
     lCsvFile.open("perf_move.csv", fstream::app);
-    lCsvFile << "BytePerItem,BytesMoved,avgTimeMemMove,avgTimeLoop" << endl;
+    lCsvFile << "BytePerItem,BytesMoved,avgTime" << endl;
 
-    test<uint64_t>(lCsvFile);
-    test<uint32_t>(lCsvFile);
-    test<uint16_t>(lCsvFile);
-    test<uint8_t>(lCsvFile);
+    testMemMove(lCsvFile);
+    testLoop<uint32_t >(lCsvFile);
+    testLoop<uint64_t >(lCsvFile);
 
     lCsvFile.close();
 

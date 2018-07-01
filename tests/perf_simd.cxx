@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sys/param.h>
 #include <cstring>
+#include <cstddef>
 
 #define __load__mm256i _mm256_stream_load_si256((__m256i*) &aKeys[i])
 
@@ -152,6 +153,15 @@ rewriteKeys(tKey * const aKeys, tKey * const aLookup){
     );
 }
 
+void inline
+flushCache(std::byte const *  aPtr, size_t const aSize){
+    std::byte const * const lPtrEnd = aPtr + aSize;
+    while (aPtr <= lPtrEnd){
+        _mm_clflush((void *) aPtr);
+        aPtr += 8;
+    }
+}
+
 template <class tKey>
 void
 test(fstream& aCsvFile) {
@@ -170,8 +180,11 @@ test(fstream& aCsvFile) {
     for (uint16_t lPosMatch = 0; lPosMatch < kNumMaxKeys; lPosMatch++){
         for (uint32_t i = 0; i< kNumIter; i++){
             rewriteKeys(lKeys, lLookup);
+            flushCache((std::byte *) lKeys, kNumMaxKeys* sizeof(tKey));
             lResSimd[i] = measure<tKey>(compareSimd<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys);
+
             rewriteKeys(lKeys, lLookup);
+            flushCache((std::byte *) lKeys, kNumMaxKeys* sizeof(tKey));
             lResRegular[i] = measure<tKey>(compare<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys);
         }
         lAvgSimd = average(lResSimd, kNumIter);

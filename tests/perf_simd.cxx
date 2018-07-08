@@ -181,11 +181,11 @@ test(fstream& aCsvFile) {
         for (uint32_t i = 0; i< kNumIter; i++){
             rewriteKeys(lKeys, lLookup);
             flushCache((std::byte *) lKeys, kNumMaxKeys* sizeof(tKey));
-            lResSimd[i] = measure<tKey>(compareSimd<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys);
+            lResSimd[i] = measure<tKey>(&compareSimd<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys);
 
             rewriteKeys(lKeys, lLookup);
             flushCache((std::byte *) lKeys, kNumMaxKeys* sizeof(tKey));
-            lResRegular[i] = measure<tKey>(compare<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys);
+            lResRegular[i] = measure<tKey>(&compare<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys);
         }
         lAvgSimd = average(lResSimd, kNumIter);
         lAvgRegular = average(lResRegular, kNumIter);
@@ -205,11 +205,16 @@ test(fstream& aCsvFile) {
     delete[](lLookup);
 }
 
-int main(){
-
+int main(int argc, char *argv[]){
+    if (argc < 2) {
+        cout
+                << "Usage:" << endl
+                << argv[0] << " <csvpath>" << endl;
+        return 1;
+    }
 
     fstream lCsvFile;
-    lCsvFile.open("perf_simd.csv", fstream::app);
+    lCsvFile.open(argv[1], fstream::app);
     lCsvFile << "BytePerItem,posItemMatching,avgTimeSimd,stdDevSimd,avgTimeRegular,stdDevRegular" << endl;
 
     test<uint64_t>(lCsvFile);

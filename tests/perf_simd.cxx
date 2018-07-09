@@ -16,7 +16,7 @@ using std::cout;
 using std::endl;
 
 constexpr uint32_t kNumMaxKeys = 40;
-constexpr uint32_t kNumIter = 100000;
+constexpr uint32_t kNumIter = 10000000;
 
 
 
@@ -102,10 +102,12 @@ getMem(size_t const aSize) {
 template <class tKey>
 double_t measure(
         uint32_t (*fToMeasure)(tKey const aKey, tKey const * aKeys, uint16_t const aNumKeys),
-        tKey const aKey, tKey const * aKeys, uint16_t const aNumKeys) {
+        tKey const aKey, tKey const * aKeys, uint16_t const aNumKeys, uint32_t const aNumIter) {
     using namespace std::chrono;
     time_point<high_resolution_clock> begin = high_resolution_clock::now();
-    fToMeasure(aKey, aKeys, aNumKeys);
+    for (uint32_t i=0; i<aNumIter; i++){
+        fToMeasure(aKey, aKeys, aNumKeys);
+    }
     time_point<high_resolution_clock> end = high_resolution_clock::now();
     duration<double_t, std::nano> elapsed(end - begin);
     return elapsed.count();
@@ -142,18 +144,6 @@ flushLine(fstream& aCsv, uint32_t aSizeItem, uint32_t aIdxMatch, double_t aAvgSi
     aCsv << aSizeItem << "," << aIdxMatch << "," << aAvgSimd << "," << aStdDevSimd << "," << aAvgRegular << "," << aStdDevRegular << "," << endl;
 }
 
-
-template <class tKey>
-void inline
-rewriteKeys(tKey * const aKeys, tKey * const aLookup){
-    generateRandom<tKey>(aKeys, kNumMaxKeys);
-    memcpy(
-            aLookup,
-            aKeys,
-            sizeof(tKey) * kNumMaxKeys
-    );
-}
-
 void inline
 flushCache(std::byte const *  aPtr, size_t const aSize){
     std::byte const * const lPtrEnd = aPtr + aSize;
@@ -171,34 +161,23 @@ test(fstream& aCsvFile) {
     auto * const lLookup = (tKey *) getMem(kNumMaxKeys* sizeof(tKey));
 
 
-
-    auto lResSimd =  new double_t[kNumIter];
-    auto lResRegular =  new double_t[kNumIter];
     double_t lAvgSimd, lAvgRegular;
 
 
     // for match in every position
     for (uint16_t lPosMatch = 0; lPosMatch < kNumMaxKeys; lPosMatch++){
-        for (uint32_t i = 0; i< kNumIter; i++){
-            rewriteKeys(lKeys, lLookup);
-            flushCache((std::byte *) lKeys, kNumMaxKeys* sizeof(tKey));
-            lResSimd[i] = measure<tKey>(&compareSimd<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys);
+        lAvgSimd = measure<tKey>(&compareSimd<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys, kNumIter) / kNumIter;
+        lAvgRegular = measure<tKey>(&compare<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys, kNumIter) / kNumIter;
 
-            rewriteKeys(lKeys, lLookup);
-            flushCache((std::byte *) lKeys, kNumMaxKeys* sizeof(tKey));
-            lResRegular[i] = measure<tKey>(&compare<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys);
-        }
-        lAvgSimd = average(lResSimd, kNumIter);
-        lAvgRegular = average(lResRegular, kNumIter);
 
         flushLine(
                 aCsvFile,
                 sizeof(tKey),
                 lPosMatch,
                 lAvgSimd,
-                std_dev(lResSimd, kNumIter, lAvgSimd),
+                0.0,
                 lAvgRegular,
-                std_dev(lResSimd, kNumIter, lAvgRegular)
+                0.0
         );
     }
 

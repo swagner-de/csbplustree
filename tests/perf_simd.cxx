@@ -120,13 +120,23 @@ average(double_t const * const aItems, const uint32_t aNumItems){
     return lSum/aNumItems;
 }
 
+void
+printArray(double_t const * const aArray, size_t const aSze){
+    for (uint32_t i = 0; i < aSze; i++) {
+        std::cout << aArray[i] << std::endl;
+    }
+}
+
+
 double_t std_dev(double_t const * const aItems, const uint32_t aNumItems, double_t aAvg){
     double_t lSum = 0;
+    printArray(aItems, aNumItems);
     for (uint32_t i = 0; i < aNumItems; i++){
-        lSum += exp2(aItems[i] - aAvg);
+        lSum += pow(aItems[i] - aAvg, 2.0);
     }
     return sqrt(lSum/aNumItems);
 }
+
 
 template <class tKey>
 void generateRandom(tKey * const aRandArr, uint32_t aNum){

@@ -11,21 +11,26 @@
 
 #define __load__mm256i _mm256_stream_load_si256((__m256i*) &aKeys[i])
 
+#define use(r) __asm__ __volatile__("" :: "m"(r));
+
+
 using std::fstream;
 using std::cout;
 using std::endl;
 
-constexpr uint32_t kNumMaxKeys = 40;
-constexpr uint32_t kNumIter = 10000000;
+constexpr uint32_t kNumMaxKeys = 1000000000;
+constexpr uint32_t kPrecision = 15;
+constexpr uint32_t kNumIter = UINT32_MAX/4;
+
 
 
 
 template <class Key_t>
-uint32_t compareSimd(Key_t const aKey, Key_t const * aKeys, uint16_t const aNumKeys);
+uint32_t compareSimd(Key_t const aKey, Key_t const * aKeys, uint32_t const aNumKeys);
 
 template <>
 uint32_t
-compareSimd<uint64_t >(uint64_t const aKey, uint64_t const * aKeys, uint16_t const aNumKeys) {
+compareSimd<uint64_t >(uint64_t const aKey, uint64_t const * aKeys, uint32_t const aNumKeys) {
     if (aNumKeys == 0) return 0;
     __m256i lVecKeys;
     __m256i lVecRes;
@@ -51,7 +56,7 @@ compareSimd<uint64_t >(uint64_t const aKey, uint64_t const * aKeys, uint16_t con
 
 template <>
 uint32_t
-compareSimd<uint32_t >(uint32_t const aKey, uint32_t const * aKeys, uint16_t const aNumKeys) {
+compareSimd<uint32_t >(uint32_t const aKey, uint32_t const * aKeys, uint32_t const aNumKeys) {
     if (aNumKeys == 0) return 0;
     uint16_t const lNumItemsIter = 8;
     uint16_t lIdxItemGt;
@@ -81,7 +86,7 @@ compareSimd<uint32_t >(uint32_t const aKey, uint32_t const * aKeys, uint16_t con
 
 template <class tKey>
 uint32_t
-compare(tKey const aKey, tKey const * aKeys, uint16_t const aNumKeys) {
+compare(tKey const aKey, tKey const * aKeys, uint32_t const aNumKeys) {
     for (uint16_t i = 0; i < aNumKeys; i++) {
         if (aKeys[i] >= aKey) {
             return i;
@@ -101,12 +106,14 @@ getMem(size_t const aSize) {
 
 template <class tKey>
 double_t measure(
-        uint32_t (*fToMeasure)(tKey const aKey, tKey const * aKeys, uint16_t const aNumKeys),
-        tKey const aKey, tKey const * aKeys, uint16_t const aNumKeys, uint32_t const aNumIter) {
+        uint32_t (*fToMeasure)(tKey const, tKey const *, uint32_t const),
+        tKey const aKey, tKey const * aKeys, uint32_t const aNumKeys) {
     using namespace std::chrono;
     time_point<high_resolution_clock> begin = high_resolution_clock::now();
-    for (uint32_t i=0; i<aNumIter; i++){
-        fToMeasure(aKey, aKeys, aNumKeys);
+    uint32_t lRes;
+    for (uint32_t i=0; i<kNumIter; i++){
+        lRes = fToMeasure(aKey, aKeys, aNumKeys);
+        use(lRes);
     }
     time_point<high_resolution_clock> end = high_resolution_clock::now();
     duration<double_t, std::nano> elapsed(end - begin);
@@ -161,13 +168,15 @@ test(fstream& aCsvFile) {
     auto * const lLookup = (tKey *) getMem(kNumMaxKeys* sizeof(tKey));
 
 
-    double_t lAvgSimd, lAvgRegular;
+    double_t lAvgSimd = 0, lAvgRegular = 0;
 
 
     // for match in every position
-    for (uint16_t lPosMatch = 0; lPosMatch < kNumMaxKeys; lPosMatch++){
-        lAvgSimd = measure<tKey>(&compareSimd<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys, kNumIter) / kNumIter;
-        lAvgRegular = measure<tKey>(&compare<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys, kNumIter) / kNumIter;
+    for (uint32_t lPosMatch = 0; lPosMatch < kNumMaxKeys; lPosMatch += kPrecision){
+        lAvgSimd = measure<tKey>(&compareSimd<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys) / kNumIter;
+        lAvgRegular = measure<tKey>(&compare<tKey>, lLookup[lPosMatch], lKeys, kNumMaxKeys) / kNumIter;
+
+        cout << "MatchIdx: " << lPosMatch << "   |   AvgSimd: " << lAvgSimd << "   |   AvgReg: " << lAvgRegular << endl;
 
 
         flushLine(

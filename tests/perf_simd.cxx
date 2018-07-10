@@ -13,14 +13,14 @@
 
 #define use(r) __asm__ __volatile__("" :: "m"(r));
 
+constexpr uint32_t kNumMaxKeys = 100000;
+constexpr uint32_t kPrecision = 4;
+constexpr uint32_t kNumIter = 100000000;
+
 
 using std::fstream;
 using std::cout;
 using std::endl;
-
-constexpr uint32_t kNumMaxKeys = 1000000000;
-constexpr uint32_t kPrecision = 15;
-constexpr uint32_t kNumIter = UINT32_MAX/4;
 
 
 
@@ -146,6 +146,17 @@ void generateRandom(tKey * const aRandArr, uint32_t aNum){
     }
 }
 
+template <class tKey>
+void inline
+rewriteKeys(tKey * const aKeys, tKey * const aLookup){
+    generateRandom<tKey>(aKeys, kNumMaxKeys);
+    memcpy(
+            aLookup,
+            aKeys,
+            sizeof(tKey) * kNumMaxKeys
+    );
+}
+
 void inline
 flushLine(fstream& aCsv, uint32_t aSizeItem, uint32_t aIdxMatch, double_t aAvgSimd, double_t aStdDevSimd, double_t aAvgRegular, double_t aStdDevRegular){
     aCsv << aSizeItem << "," << aIdxMatch << "," << aAvgSimd << "," << aStdDevSimd << "," << aAvgRegular << "," << aStdDevRegular << "," << endl;
@@ -167,8 +178,10 @@ test(fstream& aCsvFile) {
     auto * const lKeys = (tKey *) getMem(kNumMaxKeys* sizeof(tKey));
     auto * const lLookup = (tKey *) getMem(kNumMaxKeys* sizeof(tKey));
 
+    rewriteKeys(lKeys, lLookup);
 
     double_t lAvgSimd = 0, lAvgRegular = 0;
+
 
 
     // for match in every position

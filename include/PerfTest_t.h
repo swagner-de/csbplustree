@@ -25,8 +25,9 @@ private:
     using Tid_t = typename IndexStruc_t::mapped_type;
 
 
-    IndexStruc_t idxStr_;
+    IndexStruc_t * idxStr_;
     const TestConfig_tt &config_;
+    const uint32_t numIterations_;
     uint64_t numKeysInserted_;
     uint64_t numKeysRead_;
     pair<Key_t, Tid_t>* keyTid_;
@@ -42,10 +43,12 @@ private:
 
     double_t measure(MeasureFuncPt fToMeasure, uint64_t k);
 
+    static double_t average(double_t const * const aVec, uint32_t aLenVec);
+
 
 public:
 
-    PerfTest_t(const TestConfig_tt &aConfig);
+    PerfTest_t(const TestConfig_tt &aConfig, uint32_t const aNumIterations);
     PerfTest_t(const PerfTest_t&) = default;
     PerfTest_t& operator=(const PerfTest_t&) = default;
     ~PerfTest_t();

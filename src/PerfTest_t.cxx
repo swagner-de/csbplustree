@@ -9,7 +9,7 @@ void
 PerfTest_t<IndexStruc_t>::
 insertK(uint64_t const k){
     for (uint64_t i = numKeysInserted_; i < numKeysInserted_ + k; i++){
-        idxStr_.insert(keyTid_[i]);
+        idxStr_->insert(keyTid_[i]);
     }
     numKeysInserted_ += k;
 }
@@ -20,7 +20,7 @@ PerfTest_t<IndexStruc_t>::
 findK(uint64_t k){
     if (k > numKeysInserted_) k = numKeysInserted_;
     for (uint64_t i = 0; i < k; i++) {
-        it lRes = idxStr_.find(keyTid_[i].first);
+        it lRes = idxStr_->find(keyTid_[i].first);
         tidFound_[i] = lRes->second;
     }
     numKeysRead_ = k;
@@ -57,12 +57,21 @@ measure(MeasureFuncPt fToMeasure, uint64_t k){
     return elapsed.count();
 }
 
-
+template <class IndexStruc_t>
+double_t
+PerfTest_t<IndexStruc_t>::
+average(double_t const * const aVec, uint32_t aLenVec){
+    double_t lSum = 0;
+    for (uint32_t i = 0; i<aLenVec; i++){
+        lSum += aVec[i];
+    }
+    return lSum/aLenVec;
+}
 
 template <class IndexStruc_t>
 PerfTest_t<IndexStruc_t>::
-PerfTest_t(const TestConfig_tt& aConfig):
-        idxStr_(), config_(aConfig), numKeysInserted_(0), numKeysRead_(0),
+PerfTest_t(const TestConfig_tt& aConfig, uint32_t const aNumIterations):
+        idxStr_(new IndexStruc_t()), config_(aConfig), numIterations_(aNumIterations), numKeysInserted_(0), numKeysRead_(0),
         keyTid_(new pair<Key_t, Tid_t>[config_._numKeysToPreinsert + config_._numKeysToInsert]),
         tidFound_(new Tid_t[config_._numKeysToPreinsert + config_._numKeysToInsert]) {
     genKeysAndTids();
@@ -93,22 +102,39 @@ bool
 PerfTest_t<IndexStruc_t>::
 run(TestResult_tt& aResult){
     using namespace std;
+    auto * const lVecRes = new double_t[numIterations_];
+
 
     cout << "prefilling..." << endl;
     prefill();
 
     cout << "measuring insert..." << endl;
-    aResult._measuredInsertedKeys = measure(
-            &ThisPerfTest_t::insertK,
-            config_._numKeysToInsert
-    );
+    for (uint32_t i = 0; i<numIterations_; i++){
 
+        lVecRes[i] = measure(
+                &ThisPerfTest_t::insertK,
+                config_._numKeysToInsert
+        );
+        if (i == (numIterations_ -1)){
+            break;
+        }
+        delete idxStr_;
+        idxStr_ = new IndexStruc_t();
+        numKeysInserted_ = 0;
+    }
+    aResult._measuredInsertedKeys = average(lVecRes, numIterations_);
 
     cout << "measuring lookup" << endl;
-    aResult._measuredLookupKeys = measure(
-            &ThisPerfTest_t::findK,
-            config_._numKeysToInsert
-    );
+    for (uint32_t i = 0; i<numIterations_; i++){
+
+        lVecRes[i] = measure(
+                &ThisPerfTest_t::findK,
+                config_._numKeysToInsert
+        );
+    }
+    aResult._measuredLookupKeys = average(lVecRes, numIterations_);
+
+
 
     cout << "verifying read values" << endl;
     if(!verifyAllRead()) return false;

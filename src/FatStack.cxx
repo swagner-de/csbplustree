@@ -1,4 +1,5 @@
 #include <memory>
+#include <cstring>
 
 #include "../include/global.h"
 #include "../include/FatStack_t.h"

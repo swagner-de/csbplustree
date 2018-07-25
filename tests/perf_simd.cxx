@@ -13,9 +13,9 @@
 
 #define use(r) __asm__ __volatile__("" :: "m"(r));
 
-constexpr uint32_t kNumMaxKeys = 100000;
-constexpr uint32_t kPrecision = 4;
-constexpr uint32_t kNumIter = 100000000;
+constexpr uint32_t kNumMaxKeys = 1000;
+constexpr uint32_t kPrecision = 8;
+constexpr uint32_t kNumIter = 1000000;
 
 
 using std::fstream;
@@ -139,17 +139,16 @@ double_t std_dev(double_t const * const aItems, const uint32_t aNumItems, double
 
 
 template <class tKey>
-void generateRandom(tKey * const aRandArr, uint32_t aNum){
-    std::minstd_rand0 lRandGen(std::chrono::system_clock::now().time_since_epoch().count());
+void fillArray(tKey * const aFillArr, uint32_t aNum){
     for (uint32_t i= 0; i< aNum; i++){
-        aRandArr[i] = lRandGen();
+        aFillArr[i] = i;
     }
 }
 
 template <class tKey>
 void inline
 rewriteKeys(tKey * const aKeys, tKey * const aLookup){
-    generateRandom<tKey>(aKeys, kNumMaxKeys);
+    fillArray<tKey>(aKeys, kNumMaxKeys);
     memcpy(
             aLookup,
             aKeys,

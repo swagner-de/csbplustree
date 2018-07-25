@@ -14,7 +14,7 @@
 #define use(r) __asm__ __volatile__("" :: "m"(r));
 
 constexpr uint32_t kNumMaxKeys = 1000;
-constexpr uint32_t kPrecision = 8;
+constexpr uint32_t kPrecision = 2;
 constexpr uint32_t kNumIter = 1000000;
 
 

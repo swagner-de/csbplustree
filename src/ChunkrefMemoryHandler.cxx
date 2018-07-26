@@ -22,8 +22,15 @@ MemoryChunk_t() : begin_(nullptr), freeItems_(kSizeChunk/kSizeObject), firstFree
     if (posix_memalign((void **) &this->begin_, kSizeCacheLine, kSizeChunk)) {
         throw MemAllocFailedException();
     }
+
     new(begin_) UnusedMemorySubchunk_t();
     firstFree_ = (UnusedMemorySubchunk_t *)  begin_;
+
+    UnusedMemorySubchunk_t * previous = firstFree_;
+    for (UnusedMemorySubchunk_t * current = firstFree_ + 1;
+         ((byte *)current) < (begin_ + kSizeObject); current++){
+        new (current) UnusedMemorySubchunk_t( previous);
+    }
 }
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
@@ -51,18 +58,12 @@ byte*
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
 getMem(bool const aZeroed) {
     if (0 == freeItems_) return nullptr;
-
     byte* lAddr = firstFree_->deliver();
     if (!contains(lAddr) && lAddr != NULL){
         throw MemAddrNotPartofChunk();
     } else {
         freeItems_--;
-        if (nullptr == firstFree_->nextFree_){
-            firstFree_ = new ((byte*)firstFree_ + kSizeObject) UnusedMemorySubchunk_t();
-        }
-        else {
-            firstFree_ = firstFree_->nextFree_;
-        }
+        firstFree_ = firstFree_->nextFree_;
         if (aZeroed) memset(lAddr, 0, kSizeChunk);
         return lAddr;
     }
@@ -84,22 +85,9 @@ template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 void
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
 release(byte * const aStartAddr) {
-    // find chunk UnusedMemorySubchunk before item
-    UnusedMemorySubchunk_t *lCurrent = firstFree_;
-    UnusedMemorySubchunk_t *lPrevious = nullptr;
-    while ((byte*) lCurrent < aStartAddr && lCurrent != nullptr){
-        lPrevious = lCurrent;
-        lCurrent = lCurrent->nextFree_;
-    }
-    
-    freeItems_++;
 
-    // Chunk is before the _firstFree ptr
-    if (lPrevious == nullptr){
-        firstFree_ = new (aStartAddr) UnusedMemorySubchunk_t(firstFree_);
-        return;
-    }
-    lPrevious->nextFree_ = new (aStartAddr) UnusedMemorySubchunk_t(lPrevious->nextFree_);
+    firstFree_ = new (aStartAddr) UnusedMemorySubchunk_t(firstFree_);
+    freeItems_++;
 }
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>

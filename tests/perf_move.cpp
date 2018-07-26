@@ -103,7 +103,7 @@ flushLine(fstream& aCsv, uint32_t aSizeItem, uint32_t aOverLapDistance, uint32_t
 
 template <class tKey>
 void
-test(fstream& aCsvFile, void (*fToMeasure)(tKey * const, tKey * const , uint32_t const), bool aOverlap) {
+test(fstream& aCsvFile, void (*fToMeasure)(tKey * const, tKey * const , uint32_t const), bool aOverlap, bool aMemmove = false) {
 
     auto * const lSrcArray = (tKey *) getMem(kNumMaxBytesToMove + sizeof(tKey));
     tKey * lDstArray;
@@ -126,7 +126,7 @@ test(fstream& aCsvFile, void (*fToMeasure)(tKey * const, tKey * const , uint32_t
             lNumBytesToMove <= kNumMaxBytesToMove;
             lNumBytesToMove += sizeof(tKey)) {
         lRes = measure(fToMeasure, lSrcArray, lDstArray, lNumBytesToMove / sizeof(tKey));
-        flushLine(aCsvFile, sizeof(tKey), lSizeOverlap, lNumBytesToMove, lRes);
+        flushLine(aCsvFile, aMemmove ? 0 : sizeof(tKey), lSizeOverlap, lNumBytesToMove, lRes);
     }
 
     delete[](lSrcArray);
@@ -155,8 +155,8 @@ int main(int argc, char *argv[]){
     test<uint64_t>(lCsvFile, &moveLoop<uint64_t>, false);
     test<uint64_t>(lCsvFile, &moveLoopOverlap<uint64_t>, true);
 
-    test<uint64_t>(lCsvFile, &moveMemMove<uint64_t>, false);
-    test<uint64_t>(lCsvFile, &moveMemMove<uint64_t>, true);
+    test<uint64_t>(lCsvFile, &moveMemMove<uint64_t>, false, true);
+    test<uint64_t>(lCsvFile, &moveMemMove<uint64_t>, true, true);
 
 
     lCsvFile.close();

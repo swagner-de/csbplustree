@@ -9,8 +9,8 @@
 #include <fstream>
 
 
-uint32_t constexpr lNumMaxBytesToMove = 4096;
-uint32_t constexpr lNumIter = 100000;
+uint32_t constexpr kNumMaxBytesToMove = 4096;
+uint32_t constexpr kNumIter = 100000;
 
 
 using std::cout;
@@ -25,34 +25,51 @@ getMem(size_t const aSize) {
     }
     return lPtrMem;
 }
+template <class tKey>
+void print(tKey const * const aSrc, tKey const * const aDst, uint32_t aLen){
+    for (uint32_t i =0; i < aLen; i++){
+        cout << aSrc[i] << " == " << aDst[i]<< endl;
+    }
+    cout << "Len: " << aLen << endl << "-------" << endl;
+}
 
 template <class tKey>
-void inline
-moveMemMove(tKey * const aSrc, tKey * const aDest, uint32_t const aIdxBegin, uint32_t const aNumKeysToMove){
+void
+moveMemMove(tKey * const aSrc, tKey * const aDest, uint32_t const aNumKeysToMove){
     if (0 == aNumKeysToMove) return;
     memmove(
             aDest,
-            &aSrc[aIdxBegin],
-            aNumKeysToMove
+            aSrc,
+            aNumKeysToMove* sizeof(tKey)
     );
 }
 
 template <class tKey>
-void inline
-moveLoop(tKey * const aSrc, tKey * const aDest, uint32_t const aIdxBegin, uint32_t const aNumKeysToMove){
+void
+moveLoop(tKey * const aSrc, tKey * const aDest, uint32_t const aNumKeysToMove){
     if (0 == aNumKeysToMove) return;
     for (uint32_t i = 0; i < aNumKeysToMove; i++){
-        aDest[i] = aSrc[aIdxBegin + i];
+        aDest[i] = aSrc[i];
     }
 }
 
 template <class tKey>
+void
+moveLoopOverlap(tKey * const aSrc, tKey * const aDest, uint32_t const aNumKeysToMove){
+    if (0 == aNumKeysToMove) return;
+    for (int32_t i = aNumKeysToMove -1; i>=0; i--){
+        aDest[i] = aSrc[i];
+    }
+}
+
+
+template <class tKey>
 double_t measure(
-        void (*fToMeasure)(tKey * const, tKey * const , uint32_t const, uint32_t const),
-        tKey * const aSrc, tKey * const aDest, uint32_t const aIdxBegin, uint32_t const aNumKeysToMove) {
+        void (*fToMeasure)(tKey * const, tKey * const , uint32_t const),
+        tKey * const aSrc, tKey * const aDest, uint32_t const aNumKeysToMove) {
     using namespace std::chrono;
     time_point<high_resolution_clock> begin = high_resolution_clock::now();
-    fToMeasure(aSrc, aDest, aIdxBegin, aNumKeysToMove);
+    fToMeasure(aSrc, aDest, aNumKeysToMove);
     time_point<high_resolution_clock> end = high_resolution_clock::now();
     duration<double_t, std::nano> elapsed(end - begin);
     return elapsed.count();
@@ -76,8 +93,13 @@ void generateRandom(tKey * const aRandArr, uint32_t aNum){
 }
 
 void inline
-flushLine(fstream& aCsv, uint32_t aSizeItem, uint32_t aNumBytes, double_t aAvg){
-    aCsv << aSizeItem << "," << aNumBytes << "," << aAvg << "," << endl;
+flushLine(fstream& aCsv, uint32_t aSizeItem, uint32_t aOverLapDistance, uint32_t aNumBytes, double_t aAvg){
+    aCsv << aSizeItem << "," << aOverLapDistance << "," << aNumBytes << "," << aAvg << "," << endl;
+    cout << "sizeItem: " << aSizeItem
+         << " | overlapDist: " << aOverLapDistance
+         << " | numBytes: " << aNumBytes
+         << " | avg: " << aAvg
+         << endl;
 }
 
 
@@ -85,20 +107,20 @@ template <class tKey>
 void
 testLoop(fstream& aCsvFile){
 
-    auto * const lSrcArray = (tKey *) getMem(lNumMaxBytesToMove);
-    auto * const lDstArray = (tKey *) getMem(lNumMaxBytesToMove);
+    auto * const lSrcArray = (tKey *) getMem(kNumMaxBytesToMove);
+    auto * const lDstArray = (tKey *) getMem(kNumMaxBytesToMove);
 
-    auto lResLoop =  new double_t[lNumIter];
+    auto lResLoop =  new double_t[kNumIter];
 
-    generateRandom<tKey>(lSrcArray, lNumMaxBytesToMove / sizeof(tKey));
+    generateRandom<tKey>(lSrcArray, kNumMaxBytesToMove / sizeof(tKey));
 
 
-    for (uint32_t lNumBytesToMove = 0; lNumBytesToMove <=  lNumMaxBytesToMove; lNumBytesToMove+= sizeof(tKey)) {
-        for (uint32_t i = 0; i < lNumIter; i++) {
-            lResLoop[i] = measure(&moveLoop<tKey>, lSrcArray, lDstArray, 0, lNumBytesToMove / sizeof(tKey));
+    for (uint32_t lNumBytesToMove = sizeof(tKey);lNumBytesToMove <=  kNumMaxBytesToMove; lNumBytesToMove+= sizeof(tKey)) {
+        for (uint32_t i = 0; i < kNumIter; i++) {
+            lResLoop[i] = measure(&moveLoop<tKey>, lSrcArray, lDstArray, lNumBytesToMove / sizeof(tKey));
             memset(lDstArray, 0, lNumBytesToMove);
         }
-        flushLine(aCsvFile, sizeof(tKey), lNumBytesToMove, average(lResLoop, lNumIter));
+        flushLine(aCsvFile, sizeof(tKey), 0, lNumBytesToMove, average(lResLoop, kNumIter));
     }
 
 
@@ -113,21 +135,21 @@ testMemMove(fstream& aCsvFile){
 
     using tKey = uint64_t;
 
-    auto * const lSrcArray = (tKey *) getMem(lNumMaxBytesToMove);
-    auto * const lDstArray = (tKey *) getMem(lNumMaxBytesToMove);
+    auto * const lSrcArray = (tKey *) getMem(kNumMaxBytesToMove);
+    auto * const lDstArray = (tKey *) getMem(kNumMaxBytesToMove);
 
-    auto lResMemMove =  new double_t[lNumIter];
+    auto lResMemMove =  new double_t[kNumIter];
 
-    generateRandom<tKey>(lSrcArray, lNumMaxBytesToMove / sizeof(tKey));
+    generateRandom<tKey>(lSrcArray, kNumMaxBytesToMove / sizeof(tKey));
 
-    for (uint32_t lNumBytesToMove = 0; lNumBytesToMove <=  lNumMaxBytesToMove; lNumBytesToMove+= sizeof(tKey)) {
-        for (uint32_t i = 0; i<lNumIter; i++){
+    for (uint32_t lNumBytesToMove = sizeof(tKey);lNumBytesToMove <=  kNumMaxBytesToMove; lNumBytesToMove+= sizeof(tKey)) {
+        for (uint32_t i = 0; i<kNumIter; i++){
 
-            lResMemMove[i] = measure(&moveMemMove<tKey>, lSrcArray, lDstArray, 0, lNumBytesToMove / sizeof(tKey));
+            lResMemMove[i] = measure(&moveMemMove<tKey>, lSrcArray, lDstArray, lNumBytesToMove / sizeof(tKey));
             memset(lDstArray, 0, lNumBytesToMove);
         }
 
-        flushLine(aCsvFile, 0, lNumBytesToMove, average(lResMemMove, lNumIter));
+        flushLine(aCsvFile, 0, 0, lNumBytesToMove, average(lResMemMove, kNumIter));
     }
 
     delete[](lSrcArray);
@@ -136,17 +158,71 @@ testMemMove(fstream& aCsvFile){
 }
 
 
+
+template <class tKey>
+void
+testMemMoveOverlap(fstream& aCsvFile){
+
+
+    auto * const lSrcArray = (tKey *) getMem(kNumMaxBytesToMove + sizeof(tKey));
+    auto * const lBackupArray = (tKey *) getMem(kNumMaxBytesToMove + sizeof(tKey));
+
+    auto lResMemMove =  new double_t[kNumIter];
+
+    generateRandom<tKey>(lBackupArray, (kNumMaxBytesToMove+1) / sizeof(tKey));
+
+    for (uint32_t lNumBytesToMove = sizeof(tKey);lNumBytesToMove <=  kNumMaxBytesToMove; lNumBytesToMove+= sizeof(tKey)) {
+        for (uint32_t i = 0; i<kNumIter; i++){
+            lResMemMove[i] = measure(&moveMemMove<tKey>, lSrcArray, lSrcArray+1, lNumBytesToMove / sizeof(tKey));
+            memcpy(lSrcArray, lBackupArray, lNumBytesToMove + sizeof(tKey));
+        }
+
+        flushLine(aCsvFile, 0, sizeof(tKey), lNumBytesToMove, average(lResMemMove, kNumIter));
+    }
+
+    delete[](lSrcArray);
+}
+
+template <class tKey>
+void
+testLoopOverlap(fstream& aCsvFile){
+
+
+    auto * const lSrcArray = (tKey *) getMem(kNumMaxBytesToMove + sizeof(tKey));
+    auto * const lBackupArray = (tKey *) getMem(kNumMaxBytesToMove + sizeof(tKey));
+
+    auto lResLoop =  new double_t[kNumIter];
+
+    generateRandom<tKey>(lBackupArray, (kNumMaxBytesToMove+1) / sizeof(tKey));
+    memcpy(lSrcArray, lBackupArray, kNumMaxBytesToMove + sizeof(tKey));
+
+    for (uint32_t lNumBytesToMove = sizeof(tKey);lNumBytesToMove <=  kNumMaxBytesToMove; lNumBytesToMove+= sizeof(tKey)) {
+        for (uint32_t i = 0; i<kNumIter; i++){
+            lResLoop[i] = measure(&moveLoopOverlap<tKey>, lSrcArray, lSrcArray+1, lNumBytesToMove / sizeof(tKey));
+            memcpy(lSrcArray, lBackupArray, lNumBytesToMove + sizeof(tKey));
+        }
+
+        flushLine(aCsvFile, 0, sizeof(tKey), lNumBytesToMove, average(lResLoop, kNumIter));
+    }
+
+    delete[](lSrcArray);
+}
+
 int
 main(){
 
 
     fstream lCsvFile;
     lCsvFile.open("perf_move.csv", fstream::app);
-    lCsvFile << "BytePerItem,BytesMoved,avgTime" << endl;
+    lCsvFile << "BytePerItem,OverlapDistance,BytesMoved,avgTime" << endl;
 
     testMemMove(lCsvFile);
+    testMemMoveOverlap<uint32_t >(lCsvFile);
+    testMemMoveOverlap<uint64_t >(lCsvFile);
     testLoop<uint32_t >(lCsvFile);
     testLoop<uint64_t >(lCsvFile);
+    testLoopOverlap<uint32_t >(lCsvFile);
+    testLoopOverlap<uint64_t >(lCsvFile);
 
     lCsvFile.close();
 

@@ -202,7 +202,7 @@ testLoopOverlap(fstream& aCsvFile){
             memcpy(lSrcArray, lBackupArray, lNumBytesToMove + sizeof(tKey));
         }
 
-        flushLine(aCsvFile, 0, sizeof(tKey), lNumBytesToMove, average(lResLoop, kNumIter));
+        flushLine(aCsvFile, sizeof(tKey), sizeof(tKey), lNumBytesToMove, average(lResLoop, kNumIter));
     }
 
     delete[](lSrcArray);

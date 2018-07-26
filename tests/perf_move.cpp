@@ -208,12 +208,16 @@ testLoopOverlap(fstream& aCsvFile){
     delete[](lSrcArray);
 }
 
-int
-main(){
-
+int main(int argc, char *argv[]){
+    if (argc < 2) {
+        cout
+                << "Usage:" << endl
+                << argv[0] << " <csvpath>" << endl;
+        return 1;
+    }
 
     fstream lCsvFile;
-    lCsvFile.open("perf_move.csv", fstream::app);
+    lCsvFile.open(argv[1], fstream::app);
     lCsvFile << "BytePerItem,OverlapDistance,BytesMoved,avgTime" << endl;
 
     testMemMove(lCsvFile);

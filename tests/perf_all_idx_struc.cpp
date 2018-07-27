@@ -19,20 +19,30 @@ using std::fstream;
 using std::chrono::duration;
 
 using CsbTree_t_32_64_1 = CsbTree_t<uint32_t, uint64_t, 1>;
-using CsbTree_t_32_32_1 = CsbTree_t<uint32_t, uint32_t, 1>;
 using CsbTree_t_64_64_1 = CsbTree_t<uint64_t, uint64_t, 1>;
 
 using CsbTree_t_32_64_2 = CsbTree_t<uint32_t, uint64_t, 2>;
-using CsbTree_t_32_32_2 = CsbTree_t<uint32_t, uint32_t, 2>;
 using CsbTree_t_64_64_2 = CsbTree_t<uint64_t, uint64_t, 2>;
 
 using CsbTree_t_32_64_3 = CsbTree_t<uint32_t, uint64_t, 3>;
-using CsbTree_t_32_32_3 = CsbTree_t<uint32_t, uint32_t, 3>;
 using CsbTree_t_64_64_3 = CsbTree_t<uint64_t, uint64_t, 3>;
 
 using CsbTree_t_32_64_4 = CsbTree_t<uint32_t, uint64_t, 4>;
-using CsbTree_t_32_32_4 = CsbTree_t<uint32_t, uint32_t, 4>;
 using CsbTree_t_64_64_4 = CsbTree_t<uint64_t, uint64_t, 4>;
+
+using CsbTree_t_32_64_5 = CsbTree_t<uint32_t, uint64_t, 5>;
+using CsbTree_t_64_64_5 = CsbTree_t<uint64_t, uint64_t, 5>;
+
+
+using CsbTree_t_32_64_6 = CsbTree_t<uint32_t, uint64_t, 6>;
+using CsbTree_t_64_64_6 = CsbTree_t<uint64_t, uint64_t, 6>;
+
+
+using CsbTree_t_32_64_7 = CsbTree_t<uint32_t, uint64_t, 7>;
+using CsbTree_t_64_64_7 = CsbTree_t<uint64_t, uint64_t, 7>;
+
+using CsbTree_t_32_64_8 = CsbTree_t<uint32_t, uint64_t, 8>;
+using CsbTree_t_64_64_8 = CsbTree_t<uint64_t, uint64_t, 8>;
 
 
 bool aVerify;
@@ -54,20 +64,23 @@ void run_test_and_write_result(std::string const aName, uint32_t const aCacheLin
 
 int run_config_csb(const TestConfig_tt& aConf, CsvWriter_t* aCsvWriter){
 
-    run_test_and_write_result<CsbTree_t_32_32_1>("CsbTree_t", 1, aConf, aCsvWriter);
-    run_test_and_write_result<CsbTree_t_32_32_2>("CsbTree_t", 2, aConf, aCsvWriter);
-    run_test_and_write_result<CsbTree_t_32_32_3>("CsbTree_t", 3, aConf, aCsvWriter);
-    run_test_and_write_result<CsbTree_t_32_32_3>("CsbTree_t", 4, aConf, aCsvWriter);
-
     run_test_and_write_result<CsbTree_t_32_64_1>("CsbTree_t", 1, aConf, aCsvWriter);
     run_test_and_write_result<CsbTree_t_32_64_2>("CsbTree_t", 2, aConf, aCsvWriter);
     run_test_and_write_result<CsbTree_t_32_64_3>("CsbTree_t", 3, aConf, aCsvWriter);
-    run_test_and_write_result<CsbTree_t_32_64_3>("CsbTree_t", 4, aConf, aCsvWriter);
+    run_test_and_write_result<CsbTree_t_32_64_4>("CsbTree_t", 4, aConf, aCsvWriter);
+    run_test_and_write_result<CsbTree_t_32_64_5>("CsbTree_t", 5, aConf, aCsvWriter);
+    run_test_and_write_result<CsbTree_t_32_64_6>("CsbTree_t", 6, aConf, aCsvWriter);
+    run_test_and_write_result<CsbTree_t_32_64_7>("CsbTree_t", 7, aConf, aCsvWriter);
+    run_test_and_write_result<CsbTree_t_32_64_8>("CsbTree_t", 8, aConf, aCsvWriter);
 
     run_test_and_write_result<CsbTree_t_64_64_1>("CsbTree_t", 1, aConf, aCsvWriter);
     run_test_and_write_result<CsbTree_t_64_64_2>("CsbTree_t", 2, aConf, aCsvWriter);
     run_test_and_write_result<CsbTree_t_64_64_3>("CsbTree_t", 3, aConf, aCsvWriter);
-    run_test_and_write_result<CsbTree_t_64_64_3>("CsbTree_t", 4, aConf, aCsvWriter);
+    run_test_and_write_result<CsbTree_t_64_64_4>("CsbTree_t", 4, aConf, aCsvWriter);
+    run_test_and_write_result<CsbTree_t_64_64_5>("CsbTree_t", 5, aConf, aCsvWriter);
+    run_test_and_write_result<CsbTree_t_64_64_6>("CsbTree_t", 6, aConf, aCsvWriter);
+    run_test_and_write_result<CsbTree_t_64_64_7>("CsbTree_t", 7, aConf, aCsvWriter);
+    run_test_and_write_result<CsbTree_t_64_64_8>("CsbTree_t", 8, aConf, aCsvWriter);
 
 
 
@@ -85,7 +98,6 @@ int run_config_other(const TestConfig_tt& aConf, CsvWriter_t* aCsvWriter) {
     run_test_and_write_result<ArtWrapper_t<uint64_t , uint64_t >>("art", 0, aConf, aCsvWriter);
     run_test_and_write_result<std::map<uint32_t , uint64_t >>("map", 0, aConf, aCsvWriter);
     run_test_and_write_result<ArtWrapper_t<uint32_t , uint64_t >>("art", 0, aConf, aCsvWriter);
-    run_test_and_write_result<std::map<uint32_t , uint32_t >>("map", 0, aConf, aCsvWriter);
 
     return 0;
 }

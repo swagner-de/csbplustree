@@ -19,8 +19,8 @@ using std::endl;
 using std::fstream;
 
 constexpr uint32_t kNumMaxItems = 10000;
-constexpr uint32_t kNumIter = 10000;
-constexpr uint32_t kPrecision = 12;
+constexpr uint32_t kNumIter = 100000;
+constexpr uint32_t kPrecision = 4;
 
 
 using PushPopVal_t = std::pair<double_t, double_t>;

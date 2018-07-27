@@ -50,6 +50,7 @@ CsvWriter_t::flushLine(const TestConfig_tt& aTestConfig, TestResult_tt& aPerfRes
             << aTestConfig._insertMethod << ","
             << aTestConfig._numKeysToInsert << ","
             << aPerfResult._measuredInsertedKeys << ","
+            << aTestConfig._lookupMethod<< ","
             << aTestConfig._numKeysToLookup << ","
             << aPerfResult._measuredLookupKeys << ","
             << aPerfResult._name << ","
@@ -63,6 +64,7 @@ CsvWriter_t::flushLine(const TestConfig_tt& aTestConfig, TestResult_tt& aPerfRes
             << "| inserted: " << aTestConfig._numKeysToInsert
             << "| time:" << aPerfResult._measuredInsertedKeys
             << "| looked up: " << aTestConfig._numKeysToLookup
+            << "| lookup method: " << aTestConfig._lookupMethod
             << "| time: " << aPerfResult._measuredLookupKeys
             << "| struc: " << aPerfResult._name
             << "| lines: " << aPerfResult._cacheLines

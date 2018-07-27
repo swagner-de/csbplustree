@@ -114,6 +114,7 @@ int main(int argc, char *argv[]) {
             0,            // _numKeysToPreinsert
             "random",           // _insertMethod
             numKeys,            // _numKeysToInsert
+            "existing",          // lookup method
             numKeys,            // _numKeysToLookup
     };
 

@@ -55,7 +55,7 @@ namespace ChunkRefMemoryHandler {
         uint32_t getBytesAllocated() const;
         byte * getMem(bool const aZeroed=false);
         bool verify() const;
-        void release(byte * const aStartAddr);
+        inline void release(byte * const aStartAddr);
         uint32_t getFree() const;
         inline bool contains(UnusedMemorySubchunk_t const * const aAddr) const;
         inline bool contains(byte const * const aAddr) const;

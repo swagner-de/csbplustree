@@ -22,15 +22,14 @@ MemoryChunk_t() : begin_(nullptr), freeItems_(kSizeChunk/kSizeObject), firstFree
     if (posix_memalign((void **) &this->begin_, kSizeCacheLine, kSizeChunk)) {
         throw MemAllocFailedException();
     }
-
-    new(begin_) UnusedMemorySubchunk_t();
     firstFree_ = (UnusedMemorySubchunk_t *)  begin_;
 
-    UnusedMemorySubchunk_t * previous = firstFree_;
-    for (UnusedMemorySubchunk_t * current = firstFree_ + 1;
-         ((byte *)current) < (begin_ + kSizeObject); current++){
-        new (current) UnusedMemorySubchunk_t( previous);
+    // create chunks from back to front
+    UnusedMemorySubchunk_t * lPrevious = nullptr;
+    for (byte * i = (begin_ + kSizeChunk - kSizeObject); i>=begin_; i-=kSizeObject){
+        lPrevious = new (i) UnusedMemorySubchunk_t(lPrevious);
     }
+
 }
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
@@ -59,14 +58,11 @@ MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
 getMem(bool const aZeroed) {
     if (0 == freeItems_) return nullptr;
     byte* lAddr = firstFree_->deliver();
-    if (!contains(lAddr) && lAddr != NULL){
-        throw MemAddrNotPartofChunk();
-    } else {
-        freeItems_--;
-        firstFree_ = firstFree_->nextFree_;
-        if (aZeroed) memset(lAddr, 0, kSizeChunk);
-        return lAddr;
-    }
+    freeItems_--;
+    firstFree_ = firstFree_->nextFree_;
+    if (aZeroed) memset(lAddr, 0, kSizeChunk);
+    return lAddr;
+
 };
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
@@ -131,7 +127,7 @@ isFullyUnallocated() const {
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
-MemoryHandler_t() : chunks_(10){
+MemoryHandler_t()  {
     static_assert(kSizeChunk % kSizeObject == 0, "kSizeChunk is not an integer multiple of kSizeObject");
     chunks_.push_back(ThisMemoryChunk_t());
 }

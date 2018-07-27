@@ -82,6 +82,7 @@ PerfTest_t<IndexStruc_t>::
 ~PerfTest_t(){
     delete[] keyTid_;
     delete[] tidFound_;
+    delete idxStr_;
 }
 
 
@@ -100,7 +101,7 @@ verifyAllRead() const{
 template <class IndexStruc_t>
 bool
 PerfTest_t<IndexStruc_t>::
-run(TestResult_tt& aResult){
+run(TestResult_tt& aResult, bool aVerify){
     using namespace std;
     auto * const lVecRes = new double_t[numIterations_];
 
@@ -137,7 +138,7 @@ run(TestResult_tt& aResult){
 
 
     cout << "verifying read values" << endl;
-    if(!verifyAllRead()) return false;
+    if (aVerify && !verifyAllRead()) return false;
     cout << "done" << endl;
 
     aResult._sizeKeyT = sizeof(Key_t);

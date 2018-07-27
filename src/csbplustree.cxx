@@ -18,7 +18,7 @@ CsbTree_t() : tmm_(), root_(tmm_.getMem()), depth_(0) {
     static_assert(kSizeNode == sizeof(CsbInnerNode_t), "CsbInnerNode size incorrect");
     static_assert(kSizeNode == sizeof(CsbLeafNode_t), "CsbLeafNode size incorrect");
     static_assert(kSizeNode == sizeof(CsbLeafEdgeNode_t), "CsbLeafEdgeNode size incorrect");
-    static_assert(kNumMaxKeysLeafEdgeNode > 0, "CsbLeafNode has no space for keys");
+    static_assert(kNumMaxKeysLeafEdgeNode > 1, "CsbLeafNode has no space for keys");
     static_assert(kNumMaxKeysLeafNode >= (kNumMaxKeysLeafEdgeNode / 2), "CsbLeafNode cannot catch half of the keys of a CsbLeafEdge");
     // TODO assert that a InnerNode has space for 2 more nodes after a split
 }

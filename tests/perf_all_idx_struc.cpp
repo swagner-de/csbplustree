@@ -48,7 +48,7 @@ int run_test_and_write_result(std::string aName, const TestConfig_tt& aConf, Csv
     TestResult_tt lResult = {};
     lResult._name = aName;
 
-    if (!lPTest.run(lResult)) {
+    if (!lPTest.run(lResult, false)) {
         lResult._status = "Error";
         cerr << "Error in Test " << aName << endl;
         lReturnCode = 1;
@@ -119,7 +119,6 @@ int main(int argc, char *argv[]) {
             0,            // _numKeysToPreinsert
             "random",           // _insertMethod
             numKeys,            // _numKeysToInsert
-            "orderOfInsert",    // _lookupMethod
             numKeys,            // _numKeysToLookup
     };
 

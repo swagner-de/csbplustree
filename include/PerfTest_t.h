@@ -55,7 +55,7 @@ public:
 
     bool verifyAllRead() const;
 
-    bool run(TestResult_tt &aResult);
+    bool run(TestResult_tt &aResult, bool);
 };
 
 

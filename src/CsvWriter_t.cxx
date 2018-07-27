@@ -1,9 +1,11 @@
 #include <sys/stat.h>
-#include <string>
+#include <cstring>
+#include <iostream>
 
 #include "../include/CsvWriter_t.h"
 
 using std::string;
+using std::cout;
 using std::endl;
 
 // from https://stackoverflow.com/questions/4316442/stdofstream-check-if-file-exists-before-writing
@@ -48,7 +50,17 @@ CsvWriter_t::flushLine(const TestConfig_tt& aTestConfig, TestResult_tt& aPerfRes
             << aTestConfig._insertMethod << ","
             << aTestConfig._numKeysToInsert << ","
             << aPerfResult._measuredInsertedKeys << ","
-            << aTestConfig._lookupMethod << ","
+            << aTestConfig._numKeysToLookup << ","
+            << aPerfResult._measuredLookupKeys << ","
+            << aPerfResult._name << ","
+            << aPerfResult._sizeKeyT << ","
+            << aPerfResult._sizeTidT << ","
+            << aPerfResult._status << endl;
+    cout
+            << aTestConfig._numKeysToPreinsert << ","
+            << aTestConfig._insertMethod << ","
+            << aTestConfig._numKeysToInsert << ","
+            << aPerfResult._measuredInsertedKeys << ","
             << aTestConfig._numKeysToLookup << ","
             << aPerfResult._measuredLookupKeys << ","
             << aPerfResult._name << ","

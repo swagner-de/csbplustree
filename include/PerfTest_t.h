@@ -8,8 +8,8 @@
 #include "TestResult_tt.h"
 #include "TestConfig_tt.h"
 
-#define _SEED_KEYS 15831164130173156251ul
-#define _SEED_TIDS 1167110519021915224ul
+#define _SEED_KEYS 1528311651u
+#define _SEED_TIDS 1167121471u
 
 using std::string;
 using std::pair;

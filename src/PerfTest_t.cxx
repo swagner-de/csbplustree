@@ -30,8 +30,8 @@ template <class IndexStruc_t>
 void
 PerfTest_t<IndexStruc_t>::
 genKeysAndTids(){
-    std::minstd_rand0 lRandGenKey(_SEED_KEYS);
-    std::minstd_rand0 lRandGenTid(_SEED_TIDS);
+    std::linear_congruential_engine<Key_t, 16807UL, 0UL, 2147483647UL> lRandGenKey(_SEED_KEYS);
+    std::linear_congruential_engine<Key_t, 16807UL, 0UL, 2147483647UL>lRandGenTid(_SEED_TIDS);
     for (uint64_t i= 0; i< config_._numKeysToPreinsert + config_._numKeysToInsert; i++){
         keyTid_[i].first = lRandGenKey();
         keyTid_[i].second = lRandGenTid();

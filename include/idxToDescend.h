@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#if __x86_64 && __AVX2__ && __aa__
+#if __x86_64 && __AVX2__
 #include <immintrin.h>
 
 #define __load__mm256i _mm256_stream_load_si256((__m256i*) &aKeys[i])

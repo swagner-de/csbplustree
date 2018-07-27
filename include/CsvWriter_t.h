@@ -19,6 +19,7 @@ static const string headerFields_[] = {
         "numLookupKey",
         "measuredLookupKeys",
         "name",
+        "cacheLines",
         "KeyT",
         "TidT",
         "status"

@@ -12,6 +12,7 @@ struct TestResult_tt{
     uint64_t        _sizeKeyT;
     uint64_t        _sizeTidT;
     std::string     _name;
+    uint32_t        _cacheLines;
     std::string     _status;
 };
 

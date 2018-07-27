@@ -106,10 +106,10 @@ run(TestResult_tt& aResult, bool aVerify){
     auto * const lVecRes = new double_t[numIterations_];
 
 
-    cout << "prefilling..." << endl;
+    cout << "prefilling... \t";
     prefill();
 
-    cout << "measuring insert..." << endl;
+    cout << "insert... \t";
     for (uint32_t i = 0; i<numIterations_; i++){
 
         lVecRes[i] = measure(
@@ -125,21 +125,23 @@ run(TestResult_tt& aResult, bool aVerify){
     }
     aResult._measuredInsertedKeys = average(lVecRes, numIterations_);
 
-    cout << "measuring lookup" << endl;
+    cout << "lookup...\t";
     for (uint32_t i = 0; i<numIterations_; i++){
 
         lVecRes[i] = measure(
                 &ThisPerfTest_t::findK,
-                config_._numKeysToInsert
+                config_._numKeysToLookup
         );
     }
     aResult._measuredLookupKeys = average(lVecRes, numIterations_);
 
 
 
-    cout << "verifying read values" << endl;
-    if (aVerify && !verifyAllRead()) return false;
-    cout << "done" << endl;
+    if (aVerify){
+        cout << "verifying... \t";
+        if (!verifyAllRead()) return false;
+    }
+    cout << "done!" << endl;
 
     aResult._sizeKeyT = sizeof(Key_t);
     aResult._sizeTidT = sizeof(Tid_t);

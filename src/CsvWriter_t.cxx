@@ -53,18 +53,20 @@ CsvWriter_t::flushLine(const TestConfig_tt& aTestConfig, TestResult_tt& aPerfRes
             << aTestConfig._numKeysToLookup << ","
             << aPerfResult._measuredLookupKeys << ","
             << aPerfResult._name << ","
+            << aPerfResult._cacheLines<< ","
             << aPerfResult._sizeKeyT << ","
             << aPerfResult._sizeTidT << ","
             << aPerfResult._status << endl;
     cout
-            << aTestConfig._numKeysToPreinsert << ","
-            << aTestConfig._insertMethod << ","
-            << aTestConfig._numKeysToInsert << ","
-            << aPerfResult._measuredInsertedKeys << ","
-            << aTestConfig._numKeysToLookup << ","
-            << aPerfResult._measuredLookupKeys << ","
-            << aPerfResult._name << ","
-            << aPerfResult._sizeKeyT << ","
-            << aPerfResult._sizeTidT << ","
-            << aPerfResult._status << endl;
+            << "Preinsert: " << aTestConfig._numKeysToPreinsert
+            << "| insertMethod: " << aTestConfig._insertMethod
+            << "| inserted: " << aTestConfig._numKeysToInsert
+            << "| time:" << aPerfResult._measuredInsertedKeys
+            << "| looked up: " << aTestConfig._numKeysToLookup
+            << "| time: " << aPerfResult._measuredLookupKeys
+            << "| struc: " << aPerfResult._name
+            << "| lines: " << aPerfResult._cacheLines
+            << "| key: " << aPerfResult._sizeKeyT
+            << "| tid: " << aPerfResult._sizeTidT
+            << "| status: " << aPerfResult._status << endl;
 }

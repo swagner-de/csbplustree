@@ -13,7 +13,7 @@ using std::fstream;
 static const string headerFields_[] = {
         "preInsertedKeys",
         "insertMethod",
-        "numInsertedKeys",
+        "numInsertedKey",
         "measuredInsertedKeys",
         "lookupMethod",
         "numLookupKey",

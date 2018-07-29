@@ -29,14 +29,36 @@ findK(uint64_t k){
 template <class IndexStruc_t>
 void
 PerfTest_t<IndexStruc_t>::
-genKeysAndTids(){
-    std::linear_congruential_engine<Key_t, 16807UL, 0UL, 2147483647UL> lRandGenKey(_SEED_KEYS);
-    std::linear_congruential_engine<Key_t, 16807UL, 0UL, 2147483647UL>lRandGenTid(_SEED_TIDS);
-    for (uint64_t i= 0; i< config_._numKeysToPreinsert + config_._numKeysToInsert; i++){
-        keyTid_[i].first = lRandGenKey();
-        keyTid_[i].second = lRandGenTid();
+genKeysAndTids() {
+    std::linear_congruential_engine<Key_t, 16807UL, 0UL, 2147483647UL> lRandGenTid(_SEED_TIDS);
+    if (config_._insertMethod == "random") {
+        std::linear_congruential_engine<Key_t, 16807UL, 0UL, 2147483647UL> lRandGenKey(_SEED_KEYS);
+        for (uint64_t i = 0; i < config_._numKeysToPreinsert + config_._numKeysToInsert; i++) {
+            keyTid_[i].first = lRandGenKey();
+            keyTid_[i].second = lRandGenTid();
+        }
+    }
+    else if (config_._insertMethod == "incr") {
+        for (uint64_t i = 0; i < config_._numKeysToPreinsert + config_._numKeysToInsert; i++) {
+            keyTid_[i].first = i;
+            keyTid_[i].second = lRandGenTid();
+        }
+    }
+
+    else if (config_._insertMethod == "decr") {
+        for (uint64_t i = config_._numKeysToPreinsert + config_._numKeysToInsert; i > 0; i--) {
+            keyTid_[i].first = i;
+            keyTid_[i].second = lRandGenTid();
+        }
+    }
+
+    else {
+        std::cout << "invalid insert method";
+        exit(-1);
     }
 }
+
+
 
 template <class IndexStruc_t>
 void

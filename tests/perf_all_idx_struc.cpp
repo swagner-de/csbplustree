@@ -122,16 +122,19 @@ int main(int argc, char *argv[]) {
 
 
 
-    const TestConfig_tt conf {
+
+    TestConfig_tt conf {
             0,            // _numKeysToPreinsert
-            "random",           // _insertMethod
+            "incr",           // _insertMethod
             numKeys,            // _numKeysToInsert
             "existing",          // lookup method
             numKeys,            // _numKeysToLookup
     };
 
-
     if (mode == "all") {
+        run_config_csb(conf, writer);
+        run_config_other(conf, writer);
+        conf._insertMethod = "decr";
         run_config_csb(conf, writer);
         run_config_other(conf, writer);
     }

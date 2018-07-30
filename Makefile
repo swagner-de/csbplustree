@@ -13,4 +13,7 @@ perfmove:
 perfsimd:
 	$(CC) $(CFLAGS) -o perf_simd.o tests/perf_simd.cxx
 
+perffill:
+	$(CC) $(CFLAGS) -o perf_mem_fill.o tests/perf_mem_fill.cpp
+
 allperf: perftree perfstack

@@ -36,3 +36,4 @@ target_link_libraries(test_BitSetMemoryHandler
 
 add_executable(test_perf_simd tests/perf_simd.cxx)
 add_executable(test_perf_move tests/perf_move.cpp)
+add_executable(pef_mem_fill tests/perf_mem_fill.cpp)

@@ -131,7 +131,7 @@ public:
     void inline insert(Key_t const aKey, Tid_t const aTid);
     void insert(std::pair<Key_t, Tid_t> const);
     void saveTreeAsJson(std::string const aPath) const;
-    void getMemoryUsage() const;
+    void getMemoryUsage(ChunkRefMemoryHandler::MemUsageStats_t&) const;
 
 
     double_t getFillDegree() const;

@@ -713,8 +713,8 @@ saveTreeAsJson(std::string const aPath) const {
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 void
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-getMemoryUsage() const{
-    this->tmm_.printUsage();
+getMemoryUsage(ChunkRefMemoryHandler::MemUsageStats_t& aMemUsageStats) const{
+    this->tmm_.getUsage(aMemUsageStats);
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>

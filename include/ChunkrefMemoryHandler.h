@@ -28,8 +28,8 @@ namespace ChunkRefMemoryHandler {
     };
 
     struct MemUsageStats_t{
-        uint32_t _numChunksAlloc;
         uint32_t _totalBytesAlloc;
+        uint32_t _totalBytesUsed;
         uint32_t _bytesFree;
     };
 

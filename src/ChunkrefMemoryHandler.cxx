@@ -186,12 +186,12 @@ template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 void
 MemoryHandler_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
 getUsage(MemUsageStats_t &aResult) const {
-    aResult._numChunksAlloc = this->chunks_.size();
-    aResult._totalBytesAlloc = 0;
+    aResult._totalBytesAlloc = this->chunks_.size() * kSizeChunk;
+    aResult._totalBytesUsed = 0;
     aResult._bytesFree = 0;
     for (auto lIt = chunks_.begin(); lIt != chunks_.end(); ++lIt) {
         aResult._bytesFree += lIt->getFree();
-        aResult._totalBytesAlloc += lIt->getSize();
+        aResult._totalBytesUsed += lIt->getBytesAllocated();
     }
 
 }
@@ -204,8 +204,7 @@ printUsage() const {
     this->getUsage(lMemStats);
 
     std::cout << " --- Memory Usage --- " << std::endl;
-    std::cout << " Chunks allocated: " << lMemStats._numChunksAlloc << std::endl;
+    std::cout << " Memory used     : " << lMemStats._totalBytesUsed /1024 << std::endl;
     std::cout << " Memory allocated: " << lMemStats._totalBytesAlloc / 1024 << std::endl;
     std::cout << " Free            : " << lMemStats._bytesFree / 1024 << std::endl;
 }
-

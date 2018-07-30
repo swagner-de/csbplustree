@@ -132,8 +132,9 @@ public:
     void insert(std::pair<Key_t, Tid_t> const);
     void saveTreeAsJson(std::string const aPath) const;
     void getMemoryUsage() const;
-    uint64_t countNodes() const;
 
+
+    double_t getFillDegree() const;
     uint64_t getNumKeys() const;
     uint64_t getNumKeysBackwards() const;
     bool verifyOrder() const;

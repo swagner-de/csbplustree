@@ -941,27 +941,50 @@ getNumKeysBackwards() const {
 }
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
-uint64_t
+double_t
 CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-countNodes() const{
-    return countNodes((CsbInnerNode_t*) root_, 0);
-}
+getFillDegree() const{
+
+    CsbInnerNode_t*      lNodeCurrent        = (CsbInnerNode_t*) this->root_;
+    CsbLeafEdgeNode_t*  lLeafEdgeCurrent;
+    CsbLeafNode_t*      lLeafCurrent;
+    CsbLeafEdgeNode_t*  lLeafEdgeFollowing;
+    Key_t               lPreviousKey;
+
+    uint64_t lCntSlotsAvail = 0;
+    uint64_t lCntSlotsTaken = 0;
 
 
-
-template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
-uint64_t
-CsbTree_t<Key_t, Tid_t, kNumCacheLinesPerInnerNode>::
-countNodes(CsbInnerNode_t const * const aNode, uint32_t const aDepth) const {
-    if (aDepth == depth_)
-        return kNumMaxKeysInnerNode;
-    uint64_t lNumNodes = kNumMaxKeysInnerNode;
-    for (uint16_t i; i < aNode->numKeys_;i++){
-        lNumNodes += countNodes((CsbInnerNode_t*) getKthNode(i, aNode->children_), aDepth +1);
+    // walk to the leftmost LeafEdgeNode
+    for (uint64_t iDepth = 0; iDepth < this->depth_; iDepth++){
+        lNodeCurrent = (CsbInnerNode_t*) lNodeCurrent->children_;
     }
-    return lNumNodes;
-}
 
+    lLeafEdgeCurrent = (CsbLeafEdgeNode_t*) lNodeCurrent;
+
+
+
+    // iterate over the leaf node groups
+    do {
+        // remember the following LeafEdge
+        lLeafEdgeFollowing = lLeafEdgeCurrent->following_;
+        // count the LeafEdge's keys
+        lCntSlotsTaken += lLeafEdgeCurrent->numKeys_;
+        lCntSlotsAvail += kNumMaxKeysLeafEdgeNode;
+
+        // iterate over the LeafNodes
+        uint16_t n = 1;
+        CsbLeafNode_t* lLeafCurrent = (CsbLeafNode_t*) getKthNode(n, (byte*) lLeafEdgeCurrent);
+        while (n < kNumMaxKeysInnerNode && lLeafCurrent->numKeys_ != 0){
+            lCntSlotsTaken += lLeafCurrent->numKeys_;
+            lCntSlotsAvail += kNumMaxKeysLeafNode;
+            n++;
+            lLeafCurrent++;
+        }
+        lLeafEdgeCurrent = lLeafEdgeFollowing;
+    } while (lLeafEdgeCurrent != nullptr);
+    return (double_t)lCntSlotsTaken/lCntSlotsAvail;
+}
 
 template<class Key_t, class Tid_t, uint16_t kNumCacheLinesPerInnerNode>
 bool

@@ -949,7 +949,6 @@ getFillDegree() const{
     CsbLeafEdgeNode_t*  lLeafEdgeCurrent;
     CsbLeafNode_t*      lLeafCurrent;
     CsbLeafEdgeNode_t*  lLeafEdgeFollowing;
-    Key_t               lPreviousKey;
 
     uint64_t lCntSlotsAvail = 0;
     uint64_t lCntSlotsTaken = 0;
@@ -974,7 +973,7 @@ getFillDegree() const{
 
         // iterate over the LeafNodes
         uint16_t n = 1;
-        CsbLeafNode_t* lLeafCurrent = (CsbLeafNode_t*) getKthNode(n, (byte*) lLeafEdgeCurrent);
+        lLeafCurrent = (CsbLeafNode_t*) getKthNode(n, (byte*) lLeafEdgeCurrent);
         while (n < kNumMaxKeysInnerNode && lLeafCurrent->numKeys_ != 0){
             lCntSlotsTaken += lLeafCurrent->numKeys_;
             lCntSlotsAvail += kNumMaxKeysLeafNode;
@@ -1023,7 +1022,7 @@ verifyOrder() const {
         }
         // iterate over the LeafNodes
         uint16_t n = 1;
-        CsbLeafNode_t* lLeafCurrent = (CsbLeafNode_t*) getKthNode(n, (byte*) lLeafEdgeCurrent);
+        lLeafCurrent = (CsbLeafNode_t*) getKthNode(n, (byte*) lLeafEdgeCurrent);
         while (n < kNumMaxKeysInnerNode && lLeafCurrent->numKeys_ != 0){
             for (uint16_t i = 0; i<lLeafCurrent->numKeys_; i++){
                 if (lLeafCurrent->keys_[i] <= lPreviousKey && !lFirstKey)

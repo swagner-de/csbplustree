@@ -28,9 +28,9 @@ namespace ChunkRefMemoryHandler {
     };
 
     struct MemUsageStats_t{
-        uint32_t _totalBytesAlloc;
-        uint32_t _totalBytesUsed;
-        uint32_t _bytesFree;
+        uint64_t _totalBytesAlloc;
+        uint64_t _totalBytesUsed;
+        uint64_t _bytesFree;
     };
 
     class UnusedMemorySubchunk_t {

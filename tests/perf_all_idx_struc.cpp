@@ -56,7 +56,11 @@ void run_test_and_write_result(std::string const aName, uint32_t const aCacheLin
     lResult._cacheLines = aCacheLines;
     lResult._name = aName;
 
-    lResult._status = lPTest.run(lResult, aVerify);
+    if (lPTest.run(lResult, aVerify)){
+        lResult._status = "OK";
+    }else{
+        lResult._status = "ERROR";
+    }
 
     aCsvWriter->flushLine(aConf, lResult);
 }

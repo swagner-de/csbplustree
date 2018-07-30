@@ -43,13 +43,7 @@ template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 uint32_t
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
 getBytesAllocated() const{
-    uint32_t lSumAllocated = kSizeChunk;
-    UnusedMemorySubchunk_t* lCurrent = firstFree_;
-    while (lCurrent != nullptr) {
-        lSumAllocated -= kSizeChunk;
-        lCurrent = lCurrent->nextFree_;
-    }
-    return lSumAllocated;
+    return ((kSizeChunk/kSizeObject) - freeItems_) * kSizeChunk;
 }
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
@@ -90,13 +84,7 @@ template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
 uint32_t
 MemoryChunk_t<kSizeChunk, kSizeCacheLine, kSizeObject>::
 getFree() const{
-    UnusedMemorySubchunk_t *lCurrent = firstFree_;
-    uint32_t lFree = 0;
-    while (lCurrent != nullptr) {
-        lFree += kSizeChunk;
-        lCurrent = lCurrent->nextFree_;
-    }
-    return lFree;
+    return freeItems_ * kSizeChunk;
 }
 
 template<uint32_t kSizeChunk, uint8_t kSizeCacheLine, uint32_t kSizeObject>
